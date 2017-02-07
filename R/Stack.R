@@ -100,14 +100,15 @@ Unstack <- function(data, mainVar = 1, stackVar = (1:NCOL(data))[-mainVar], extr
     warning("Could not extra check to guarantee correct ordering") else rowData <- rowData[match_, , drop = FALSE]
   if (length(blockVar) > 0) {
     blockData <- data[seq_len(NROW(x)), blockVar, drop = FALSE]
-    for (i in blockVar) {
+    for (j in seq_len(length(blockVar))) {
+      i <- blockVar[j]
       formulaString <- paste(names(data)[i], "~", names(data)[stackVar[1]])
       v <- apply(unstack(data, formula(formulaString)), 1, unique)
       if (is.list(v)) 
         stop(paste(names(data)[i], " cannot be used as blockVar."))
       if (NCOL(v) != 1) 
         stop(paste(names(data)[i], " cannot be used as blockVar."))
-      blockData[, i] <- v
+      blockData[, j] <- v
     }
     rownames(blockData) <- NULL
     x <- cbind(blockData, x)
