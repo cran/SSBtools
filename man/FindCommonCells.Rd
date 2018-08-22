@@ -34,4 +34,3 @@ but possibly different aggregating variables.
  try(FindCommonCells(dimLists[fg$table$table1],dimLists[fg$table$table2]))
  FindCommonCells(dimLists[c(1,2)],dimLists[c(1,3)])
 }
-

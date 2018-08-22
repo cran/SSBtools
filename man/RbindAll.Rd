@@ -32,4 +32,3 @@ RbindAll(list(zA,zB,zC,zD))
 \seealso{
 \code{\link{CbindIdMatch}} (same example data)
 }
-

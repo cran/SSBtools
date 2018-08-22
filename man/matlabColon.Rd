@@ -28,10 +28,9 @@ identical(3:5, matlabColon(3, 5)) ## => TRUE
 3:1 ## => 3 2 1
 matlabColon(3, 1) ## => numeric(0)
 }
-\author{
-Bjørn-Helge Mevik
-}
 \seealso{
 \code{\link{seq}}
 }
-
+\author{
+Bjørn-Helge Mevik
+}

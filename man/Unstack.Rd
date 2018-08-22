@@ -36,4 +36,3 @@ Unstack a column from a data frame and include additional variables.
 \seealso{
 \code{\link{Stack}}  (examples)
 }
-

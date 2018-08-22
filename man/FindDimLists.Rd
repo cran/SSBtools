@@ -37,4 +37,3 @@ dimList to the function makeProblem in package sdcTable
  m <- cbind(x,y,z,zy)
  FindDimLists(m)
 }
-

@@ -45,4 +45,3 @@ Stack columns from a data frame and include variables.
 \seealso{
 \code{\link{Unstack}}
 }
-

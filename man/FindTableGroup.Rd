@@ -36,4 +36,3 @@ A single table or two linked tables are found
  FindTableGroup(m)
  FindTableGroup(m,findLinked=TRUE)
 }
-

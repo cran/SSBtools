@@ -46,4 +46,3 @@ AutoSplit(s,border=2,revBorder=TRUE)
 AutoSplit(s,noSplit=TRUE)
 AutoSplit(s,varNames=c("A","B","C","D"))
 }
-
