@@ -20,6 +20,9 @@ AddLeadingZeros(codes, places, warningText = NULL, viaFactor = TRUE,
 
 \item{removeLeadingTrailingWhitespace}{Remove leading and trailing whitespace}
 }
+\value{
+Character vector
+}
 \description{
 This function is created to fix problems caused by a serious bug in Excel. 
 Editing csv files in that program causes leading zeros to disappear.
@@ -35,4 +38,7 @@ AddLeadingZeros(c("1", "ABC", "12345", " 23", "-8", "45 ", " -9", " Agent ", "00
                   "7 James Bond "), 4, warningText = "string changes")
 AddLeadingZeros(c("1", "ABC", "12345", " 23", "-8", "45 ", " -9", " Agent ", "007", 
                   "7 James Bond "), 4, warningText = "", nWarning = 2)
+}
+\author{
+Øyvind Langsrud
 }
