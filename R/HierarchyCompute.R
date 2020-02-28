@@ -45,7 +45,6 @@ HierarchyFix <- function(hierarchy, hierarchyVarNames = c(mapsFrom = "mapsFrom",
 
 
 
-
 #' Hierarchical Computations
 #'
 #' This function computes aggregates by crossing several hierarchical specifications and factorial variables.
@@ -63,13 +62,18 @@ HierarchyFix <- function(hierarchy, hierarchyVarNames = c(mapsFrom = "mapsFrom",
 #'
 #' @param data The input data frame
 #' @param hierarchies A named (names in \code{data}) list with hierarchies. Variables can also be coded by \code{"rowFactor"} and \code{"colFactor"}.
-#' @param valueVar Name of the variable to be aggregated.
+#' @param valueVar Name of the variable(s) to be aggregated.
+#' @param colVar When non-NULL, the function \code{\link{HierarchyCompute2}} is called. See its documentation for more information.  
 #' @param rowSelect Data frame specifying variable combinations for output. The colFactor variable is not included.
+#'                  In addition \code{rowSelect=="removeEmpty"} removes combinations corresponding to empty rows (only zeros) of \code{dataDummyHierarchy}.
 #' @param colSelect Vector specifying categories of the colFactor variable for output.
+#' @param select Data frame specifying variable combinations for output. The colFactor variable is included.
 #' @param inputInOutput Logical vector (possibly recycled) for each element of hierarchies.
 #'         TRUE means that codes from input are included in output. Values corresponding to \code{"rowFactor"} and \code{"colFactor"} are ignored.
 #' @param output One of "data.frame" (default), "dummyHierarchies", "outputMatrix", "dataDummyHierarchy", "valueMatrix", "fromCrossCode",
-#'        "toCrossCode", "crossCode" (as toCrossCode), "outputMatrixWithCrossCode", "matrixComponents".
+#'        "toCrossCode", "crossCode" (as toCrossCode), "outputMatrixWithCrossCode", "matrixComponents", 
+#'        "dataDummyHierarchyWithCodeFrame", "dataDummyHierarchyQuick". 
+#'        The latter two do not require \code{valueVar} (\code{reduceData} set to \code{FALSE}).
 #' @param autoLevel Logical vector (possibly recycled) for each element of hierarchies.
 #'        When TRUE, level is computed by automatic method as in \code{\link{HierarchyFix}}.
 #'        Values corresponding to \code{"rowFactor"} and \code{"colFactor"} are ignored.
@@ -88,8 +92,13 @@ HierarchyFix <- function(hierarchy, hierarchyVarNames = c(mapsFrom = "mapsFrom",
 #' @param asInput When TRUE (FALSE is default) output matrices match input data. Thus
 #'         \code{valueMatrix} \code{=} \code{Matrix(data[, valueVar],ncol=1)}. Only possible when no colFactor.
 #' @param verbose Whether to print information during calculations. FALSE is default.
+#' @param reOrder When TRUE (FALSE is default) output codes are ordered differently, more similar to a usual model matrix ordering. 
+#' @param reduceData When TRUE (default) unnecessary (for the aggregated result) rows of \code{valueMatrix} are allowed to be removed.
+#' @param makeRownames When TRUE \code{dataDummyHierarchy} contains rownames. By default, this is decided based on the parameter \code{output}. 
 #'
 #' @return As specified by the parameter \code{output}
+#' @seealso \code{\link{Hierarchies2ModelMatrix}}, \code{\link{AutoHierarchies}}.
+#' @importFrom methods hasArg
 #' @export
 #' @author Øyvind Langsrud
 #'
@@ -127,7 +136,10 @@ HierarchyFix <- function(hierarchy, hierarchyVarNames = c(mapsFrom = "mapsFrom",
 #' # Select combinations of geo and age including a code not in data or hierarchy (zeros produced)
 #' HierarchyCompute(x, list(age = ageHier, geo = geoHier, year = "colFactor"), "ths_per", 
 #'                  rowSelect = data.frame(geo = "EU", age = c("Y0-100", "Y15-64", "Y15-29")))
-#'
+#'                  
+#' # Select combinations of geo, age and year 
+#' HierarchyCompute(x, list(age = ageHier, geo = geoHier, year = "colFactor"), "ths_per", 
+#'      select = data.frame(geo = c("EU", "Spain"), age = c("Y15-64", "Y15-29"), year = 2015))
 #'
 #' # Extend the hierarchy table to illustrate the effect of unionComplement 
 #' # Omit level since this is handled by autoLevel
@@ -148,42 +160,55 @@ HierarchyFix <- function(hierarchy, hierarchyVarNames = c(mapsFrom = "mapsFrom",
 #' # With constantsInOutput
 #' HierarchyCompute(x, list(age = ageHier, geo = geoHier, year = "colFactor"), "ths_per",
 #'                  constantsInOutput = data.frame(c1 = "AB", c2 = "CD"))
+#'                  
+#' # More that one valueVar
+#' x$y <- 10*x$ths_per
+#' HierarchyCompute(x, list(age = ageHier, geo = geoHier), c("y", "ths_per"))
 HierarchyCompute <- function(data, hierarchies, valueVar, 
-                             rowSelect = NULL, colSelect = NULL, inputInOutput = FALSE, output = "data.frame", 
+                             colVar = NULL,
+                             rowSelect = NULL, colSelect = NULL, 
+                             select = NULL,
+                             inputInOutput = FALSE, output = "data.frame", 
                              autoLevel = TRUE, unionComplement = FALSE, constantsInOutput = NULL, 
                              hierarchyVarNames = c(mapsFrom = "mapsFrom", mapsTo = "mapsTo", sign = "sign", level = "level"), 
                              selectionByMultiplicationLimit = 10^7, colNotInDataWarning = TRUE, useMatrixToDataFrame = TRUE,
-                             handleDuplicated = "sum",
-                             asInput = FALSE,
-                             verbose = FALSE) {
+                             handleDuplicated = "sum", asInput = FALSE, verbose = FALSE, reOrder = FALSE, 
+                             reduceData = TRUE, makeRownames = NULL) {
   
+  if(length(colVar)){
+    sysCall <- sys.call()
+    sysCall[[1]] <- as.name("HierarchyCompute2")
+    parentFrame = parent.frame()
+    return(eval(sysCall, envir=parentFrame))
+  }
   
-  # Fixed values instead of parameters to function
-  hierarchyNamesForOutput <- NULL
-  orderAsRowSelect <- TRUE
-  outputMatrixSelection <- FALSE
-  reductionWhenKhatriRao <- TRUE
-  stringsAsFactors <- FALSE
-  setFALSEinputInOutput <- TRUE
-  reduceDataByDummyHierarchiesAndValue <- TRUE
-  
-  noRowGroupsWhenNoColVar <- TRUE
   
   if(!(handleDuplicated %in% c("sum", "sumByAggregate", "sumWithWarning", "stop", "single", "singleWithWarning")))
     stop("invalid 'handleDuplicated' argument")
   
-  if(output=="dataDummyHierarchyWithCodeFrame")
-    reduceDataByDummyHierarchiesAndValue <- FALSE
+  
+  if(is.null(makeRownames))
+    makeRownames <- output %in% c("dataDummyHierarchyWithCodeFrame", "dataDummyHierarchyQuick", "dataDummyHierarchy", "matrixComponents")
+  
+  
+  if(hasArg(valueVar)){
+    nValueVar = length(valueVar)
+  } else {
+    nValueVar = 1L
+  }
+  
+  if(output=="dataDummyHierarchyWithCodeFrame"  | output=="dataDummyHierarchyQuick"){  # used by HierarchyComputeDummy/Hierarchies2ModelMatrix
+    reduceData <- FALSE                                                                # valueVar not used
+  } 
   
   if(asInput){
-    reduceDataByDummyHierarchiesAndValue <- FALSE
+    reduceData <- FALSE
     if(handleDuplicated !="sum")
       stop("'handleDuplicated' must be 'sum' when 'asInput'")
   }
   
-  if(handleDuplicated !="sum")
-    noRowGroupsWhenNoColVar <- FALSE
-  
+  noRowGroupsWhenNoColVar <- !(handleDuplicated !="sum")
+    
   removeEmpty <- FALSE
   if(!is.null(rowSelect ))
     if(is.character(rowSelect))
@@ -193,11 +218,7 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
           rowSelect <- NULL
         }
     
-    
-  
-  
   nHier <- length(hierarchies)
-  
   
   inputInOutput <- rep_len(inputInOutput, nHier)
   autoLevel <- rep_len(autoLevel, nHier)
@@ -212,18 +233,23 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
   
   colInd <- which(gf == "colFactor")
   
-  # if(length(colInd)!=1){ stop('A single colVar needed in this implementation') }
-  
   if (length(colInd) > 1) {
     stop("Only a single colVar allowed in this implementation")
   }
   
+  colVar <- names(hierarchies)[colInd]
+  
   if (length(colInd) == 0) {
-    #warning("No colVar is newly implemented and little tested")
     noColVar <- TRUE
     colSelect <- NULL
-  } else noColVar <- FALSE
-  
+  } else {
+    noColVar <- FALSE
+    if (is.list(colSelect)) {
+      colSelect <- colSelect[[colVar]]
+      if (is.null(colSelect))
+        stop("Wrong colSelect input")
+    }
+  }
   
   if (!noColVar & asInput) 
     stop("asInput only possible when no colFactor")
@@ -234,8 +260,36 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
   
   hierarchyNames <- names(hierarchies)[hierarchyInd]  # colVar excluded
   
-  colVar <- names(hierarchies)[colInd]
   
+  selectOrder <- NULL
+  
+  if (!is.null(select)) {
+    if ((!is.null(rowSelect)) | (!is.null(colSelect))) 
+      stop("With non-NULL select, rowSelect and colSelect must be NULL")
+    if (noColVar) {
+      rowSelect <- select
+    } else {
+      
+      colSelect <- as.character(select[, colVar])
+      colSelInt <- as.integer(factor(colSelect))
+      colSelect <- unique(colSelect)
+      
+      rgSelect <- RowGroups(CharacterDataFrame(select[, hierarchyNames, drop=FALSE]), returnGroups = TRUE)
+      
+      selectOrder <- matrix(NaN, NROW(rgSelect$groups), length(colSelect))
+      selectOrder[cbind(rgSelect$idx, colSelInt)] <- seq_len(NROW(select))
+      selectOrder <- order(as.vector(selectOrder))[seq_len(NROW(select))]
+      rowSelect <- rgSelect$groups
+      rm(rgSelect)
+    }
+    inputColnamesRowSelect <- colnames(rowSelect)
+  } else {
+    if (!is.null(rowSelect)) {
+      inputColnamesRowSelect <- colnames(rowSelect)
+      rowSelect <- CharacterDataFrame(unique(rowSelect[, hierarchyNames, drop = FALSE]))   
+    }
+  }
+
   
   dummyHierarchies <- vector("list", nHier)
   dataDummyHierarchies <- vector("list", nHier)
@@ -247,10 +301,7 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
   
   
   if (!is.null(rowSelect)) {
-    if (setFALSEinputInOutput) 
       inputInOutput[] <- FALSE  # Handeled by keep...
-    inputColnamesRowSelect <- colnames(rowSelect)
-    rowSelect <- CharacterDataFrame(rowSelect[, hierarchyNames, drop = FALSE])  # CharacterDataFrame van be roemoved below? 
   }
   
   
@@ -261,7 +312,7 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
       hierarchies[[i]] <- FixHierarchy(hierarchies[[i]], hierarchyVarNames)
       if (autoLevel[i]) 
         hierarchies[[i]] <- AutoLevel(hierarchies[[i]])
-      hierarchies[i] <- AddMapsInput(hierarchies[i], data)  # AddMapsInput(hierarchies[i],dataOriginal)
+      hierarchies[i] <- AddMapsInput(hierarchies[i], data)  
       if (!is.null(rowSelect)) {
         hierarchies[i] <- AddNonExistingCode(hierarchies[i], rowSelect, inputInOutput[i])
         mapsInput <- attr(hierarchies[[i]], "mapsInput")
@@ -271,7 +322,10 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
         attr(hierarchies[[i]], "keepCodes") <- keepCodes
       }
       
-      dummyHierarchies[[i]] <- DummyHierarchy(mapsFrom = hierarchies[[i]]$mapsFrom, mapsTo = hierarchies[[i]]$mapsTo, mapsInput = attr(hierarchies[[i]], "mapsInput"), keepCodes = attr(hierarchies[[i]], "keepCodes"), sign = hierarchies[[i]]$sign, level = hierarchies[[i]]$level, inputInOutput = inputInOutput[i], unionComplement = unionComplement[i])
+      dummyHierarchies[[i]] <- DummyHierarchy(mapsFrom = hierarchies[[i]]$mapsFrom, mapsTo = hierarchies[[i]]$mapsTo, mapsInput = attr(hierarchies[[i]], "mapsInput"),
+                                              keepCodes = attr(hierarchies[[i]], "keepCodes"), sign = hierarchies[[i]]$sign, 
+                                              level = hierarchies[[i]]$level, inputInOutput = inputInOutput[i], unionComplement = unionComplement[i],
+                                              reOrder = reOrder)
     } else {
       if (hierarchies[[i]] == "rowFactor") {
         dummyHierarchies[[i]] <- fac2sparse(sort(factor(unique(data[, names(hierarchies)[i]]))))
@@ -331,7 +385,7 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
   rownames(data) <- NULL
   
   
-  if (reduceDataByDummyHierarchiesAndValue) 
+  if (reduceData) 
     data <- ReduceDataByDummyHierarchiesAndValue(data, dummyHierarchies, valueVar, colVar)
   
   if(verbose){
@@ -365,37 +419,51 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
   runCrossDataDummyHierarchies <- is.null(rowSelect)
   
   if (!is.null(rowSelect)) {
-    
     selectionByMultiplication <- (as.numeric(dim(rowGroups$groups)[1]) * as.numeric(NROW(rowSelect))) < selectionByMultiplicationLimit
-    
-    
-    if ((!selectionByMultiplication) & !reductionWhenKhatriRao) 
-      runCrossDataDummyHierarchies <- TRUE
   }
   
   if (runCrossDataDummyHierarchies) {
-    k <- CrossDataDummyHierarchies(dataDummyHierarchies = dataDummyHierarchies[hierarchyInd], codeFrames = codeFrames[hierarchyInd], makeDimnames = TRUE, 
-                                   useMatrixToDataFrame = useMatrixToDataFrame, removeEmpty = removeEmpty, verbose = verbose)
+    if(output=="dataDummyHierarchyQuick") 
+      codeFrames <- NULL
+    k <- CrossDataDummyHierarchies(dataDummyHierarchies = dataDummyHierarchies[hierarchyInd], codeFrames = codeFrames[hierarchyInd], makeDimnames = makeRownames, 
+                                   useMatrixToDataFrame = useMatrixToDataFrame, removeEmpty = removeEmpty, verbose = verbose, reOrder = reOrder)
+    if(output=="dataDummyHierarchyQuick" | output=="dataDummyHierarchyWithCodeFrame") {
+      if(output=="dataDummyHierarchyWithCodeFrame"){
+        k$codeFrame <- CharacterDataFrame(k$codeFrame)
+      }
+      return(k)
+    }
   } else {
     
-    k <- list(dataDummyHierarchy = NULL, codeFrame = CharacterDataFrame(rowSelect[, hierarchyNames, drop = FALSE]))
+    #k <- list(dataDummyHierarchy = NULL, codeFrame = CharacterDataFrame(rowSelect[, hierarchyNames, drop = FALSE]))
+    k <- list(dataDummyHierarchy = NULL, codeFrame = rowSelect)
     if (!selectionByMultiplication) {
-      if (reductionWhenKhatriRao) 
+      #if (reductionWhenKhatriRao) 
         k <- ReductionCrossDataDummyHierarchies(dataDummyHierarchies[hierarchyInd], codeFrames = codeFrames[hierarchyInd], codeFrame = k[[2]], 
-                                                makeDimnames = TRUE, useMatrixToDataFrame = useMatrixToDataFrame, verbose = verbose)
+                                                makeDimnames = makeRownames, useMatrixToDataFrame = useMatrixToDataFrame, verbose = verbose)
     } else {
       k[[1]] <- SelectionCrossDataDummyHierarchy(dataDummyHierarchies[hierarchyInd], k$codeFrame, verbose = verbose)
     }
   }
   
+  if(makeRownames){
+    if( is.null(rownames(k$dataDummyHierarchy) )){
+      rownames(k$dataDummyHierarchy) <- apply(k$codeFrame, 1, paste, collapse = ":")
+    }
+  }
+    
+  if(output=="dataDummyHierarchyQuick")
+    return(k$dataDummyHierarchy)
   
-  if(output=="dataDummyHierarchyWithCodeFrame")
+  if(output=="dataDummyHierarchyWithCodeFrame"){
+    k$codeFrame <- CharacterDataFrame(k$codeFrame)
     return(k)
+  }
   
   
   readyValueMatrix <- FALSE
   if (noColVar) {
-    valueMatrix <- Matrix(0, dim(rowGroups$groups)[1], 1)
+    valueMatrix <- Matrix(0, dim(rowGroups$groups)[1], nValueVar)
     colnames(valueMatrix) <- colnames(data[1, valueVar, drop = FALSE])
     if(handleDuplicated !="single")
       if( NROW(valueMatrix) != NROW(data)){
@@ -407,49 +475,45 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
           if(handleDuplicated %in% c("sum", "sumByAggregate","sumWithWarning")){ 
             if(handleDuplicated == "sumWithWarning") 
               warning("Duplicated rows in input summed ('handleDuplicated=sumWithWarning').")
-            aggData = aggregate(value~idx,
-                                data=data.frame(idx = rowGroups$idx, value = data[, valueVar]),
-                                FUN=sum)
-            valueMatrix[aggData$idx, 1] <- aggData$value
+            if(verbose){
+              cat(" [ aggregate..")
+              flush.console()}
+            aggData <- aggregate(data[, valueVar, drop = FALSE], by = list(idx69_3h4_6kd = rowGroups$idx), FUN = sum)
+            if(verbose){
+              cat(".")
+              flush.console()}
+            if(nValueVar>1)
+              valueMatrix[aggData$idx69_3h4_6kd, valueVar] <- as.matrix(aggData[, valueVar])
+            else
+              valueMatrix[aggData$idx69_3h4_6kd, valueVar] <- aggData[, valueVar]
             rm(aggData)
+            if(verbose){
+              cat("]")
+              flush.console()}
             readyValueMatrix <- TRUE
           }
         }
       }
-    # matrix isteden Nesten ingen forskjell
-    if(!readyValueMatrix)
-      valueMatrix[rowGroups$idx, 1] <- data[, valueVar]
+    if(!readyValueMatrix){
+      if (nValueVar>1){
+        valueMatrix[rowGroups$idx,  ] <- as.matrix(data[, valueVar])
+      } else {
+        valueMatrix[rowGroups$idx, 1] <- data[, valueVar]
+      }
+    }
   } else {
     
     colData <- factor(data[, colVar])
     integerColData <- as.integer(colData)
-    nCol <- max(integerColData)
+    nCol <- max(integerColData, 0L)
     
-    valueMatrix <- Matrix(0, dim(rowGroups$groups)[1], nCol)
-    # matrix isteden Nesten ingen forskjell
-    colnames(valueMatrix) <- levels(colData)
+    valueMatrix <- Matrix(0, dim(rowGroups$groups)[1], nCol*nValueVar)
+    
+    colnames(valueMatrix) <- rep(levels(colData), nValueVar) 
     
     idx_integerColData <- cbind(idx = rowGroups$idx, integerColData = integerColData)
+    
   
-    #if(!(handleDuplicated %in% c("sum", "sumWithWarning", "stop", "single", "singleWithWarning")))
-    #  stop("invalid 'handleDuplicated' argument")
-    if(FALSE){
-      aggData = aggregate(value~idx+integerColData,
-              data=data.frame(idx = rowGroups$idx, integerColData = integerColData, value = data[, valueVar]),
-              FUN=sum)
-      valueMatrix[cbind(aggData$idx,aggData$integerColData)] <- aggData$value
-      rm(aggData)
-    }
-    
-    if(FALSE){
-    if(anyDuplicated(idx_integerColData)){
-      stop("Duplicated rows in input not handled in this version.")
-    }
-    
-    valueMatrix[idx_integerColData] <- data[, valueVar]
-    }
-    
-    
     if(handleDuplicated !="single")
       if(anyDuplicated(idx_integerColData)){
         if(handleDuplicated =="singleWithWarning"){
@@ -460,28 +524,44 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
           if(handleDuplicated %in% c("sum", "sumByAggregate","sumWithWarning")){ 
             if(handleDuplicated == "sumWithWarning") 
               warning("Duplicated rows in input summed ('handleDuplicated=sumWithWarning').")
-            aggData = aggregate(value~idx+integerColData,
-                                data=data.frame(idx = rowGroups$idx, integerColData = integerColData, value = data[, valueVar]),
-                                FUN=sum)
-            valueMatrix[cbind(aggData$idx,aggData$integerColData)] <- aggData$value
+            if(verbose){
+              cat(" [ aggregate..")
+              flush.console()}
+            aggData <- aggregate(data[, valueVar, drop = FALSE], 
+                                 by = list(idx69_3h4_6kd = rowGroups$idx, integerColData7y9_56 = integerColData), FUN = sum)
+            if(verbose){
+              cat(".")
+              flush.console()}
+            mIntegerColData <- rep(aggData$integerColData7y9_56, nValueVar) + rep(nCol * SeqInc(0, nValueVar - 1), each = nrow(aggData))
+            if(nValueVar>1)
+              valueMatrix[cbind(aggData$idx69_3h4_6kd, mIntegerColData)] <- as.vector(as.matrix(aggData[, valueVar]))
+            else
+              valueMatrix[cbind(aggData$idx69_3h4_6kd, mIntegerColData)] <- aggData[, valueVar]
             rm(aggData)
+            if(verbose){
+              cat("]")
+              flush.console()}
             readyValueMatrix <- TRUE
           }
         }
       }
-    # matrix isteden Nesten ingen forskjell
-    if(!readyValueMatrix)
-      valueMatrix[idx_integerColData] <- data[, valueVar]
-
+    if(!readyValueMatrix){
+      if (nValueVar>1){
+        mIntegerColData = rep(integerColData, nValueVar) + rep(nCol*SeqInc(0,nValueVar-1),each = length(integerColData))
+        valueMatrix[cbind(idx = rowGroups$idx, mIntegerColData = mIntegerColData)] <-  as.vector(as.matrix(data[, valueVar]))
+      } else {
+        valueMatrix[idx_integerColData] <- data[, valueVar]
+      }
+    }
     
   }
   
+  rownames(valueMatrix) <- NULL # rownames when square since first matrix (zeros) is  symmetric  
+  
   
   if ((!is.null(rowSelect)) & runCrossDataDummyHierarchies) {
-    #### Kode for å lagre utvalgte kombinasjoner
-    rg <- RowGroups(rbind(CharacterDataFrame(k$codeFrame), CharacterDataFrame(rowSelect[, hierarchyNames, drop = FALSE])))
-    ## Trengs CharacterDataFrame?? men på sikre side ..
-    
+    #rg <- RowGroups(rbind(CharacterDataFrame(k$codeFrame), CharacterDataFrame(rowSelect[, hierarchyNames, drop = FALSE])))
+    rg <- RowGroups(rbind(CharacterDataFrame(k$codeFrame), rowSelect))
     rg1 <- rg[seq_len(dim(k$codeFrame)[1])]
     rg2 <- rg[-seq_len(dim(k$codeFrame)[1])]
     selectedRows <- match(rg2, rg1)
@@ -489,24 +569,20 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
     selectedRows <- NULL
   }
   
-  
   if (is.null(selectedRows)) {
     outputMatrix <- k[[1]] %*% valueMatrix
     xCrossCode <- k$codeFrame
   } else {
-    if (outputMatrixSelection) {
-      outputMatrix <- (k[[1]] %*% valueMatrix)[selectedRows, , drop = FALSE]
-    } else {
-      # sparer litt på denne
       outputMatrix <- k[[1]][selectedRows, , drop = FALSE] %*% valueMatrix
-    }
     xCrossCode <- k$codeFrame[selectedRows, , drop = FALSE]
   }
   
   xCrossCode <- CharacterDataFrame(xCrossCode)
   rownames(xCrossCode) <- NULL
   
-  if ((!is.null(rowSelect)) & orderAsRowSelect & is.null(hierarchyNamesForOutput)) {
+  hierarchyNamesForOutput <- NULL
+  
+  if ((!is.null(rowSelect)) & is.null(hierarchyNamesForOutput)) {
     hierarchyNamesForOutput <- inputColnamesRowSelect
   }
   
@@ -585,21 +661,52 @@ HierarchyCompute <- function(data, hierarchies, valueVar,
     flush.console()}
   
   x <- as.matrix(outputMatrix)
+  if(ncol(x) == 0){
+    colnamesX <- character(0)
+  }
+  else{
+    colnamesX <- colnames(x)
+  }
+  dimX1 <- dim(x)[1]
   
-  z <- data.frame(a = as.vector(x), stringsAsFactors = stringsAsFactors)
-  names(z) <- valueVar
-  
-  # return(list(x=x,colVar=colVar))
+  if(nValueVar>1){
+    if(!noColVar){
+      colnamesX <- colnamesX[seq_len(nCol)]
+      x <- matrix(x, ncol = nValueVar)
+      colnames(x) <- valueVar
+      z <- as.data.frame(x)
+    } else {
+      z <- as.data.frame(x)
+    }
+  } else {
+    z <- data.frame(a = as.vector(x), stringsAsFactors = FALSE)
+    names(z) <- valueVar
+  }
   
   if (noColVar) {
     colDataSelected <- xCrossCode[, integer(0)]
   } else {
-    colDataSelected <- data.frame(a = rep(colnames(x), times = 1, each = dim(x)[1]), stringsAsFactors = stringsAsFactors)
+    colDataSelected <- data.frame(a = rep(colnamesX, times = 1, each = dimX1), stringsAsFactors = FALSE)
     names(colDataSelected) <- colVar
+  }
+  
+  if (nrow(colDataSelected) == 0) {
+    xCrossCode <- xCrossCode[integer(0), , drop = FALSE]
+    if (!is.null(constantsInOutput)) 
+      constantsInOutput <- constantsInOutput[integer(0), , drop = FALSE]
   }
   
   if (!is.null(constantsInOutput)) 
     w <- cbind(constantsInOutput, colDataSelected, xCrossCode, z) else w <- cbind(colDataSelected, xCrossCode, z)
+  
+  
+  if (!is.null(selectOrder)) {
+    w <- w[selectOrder, , drop = FALSE]
+  }
+  
+  rownames(w) <- NULL
+  
+  
   if(verbose){
     cat("]\n")
     flush.console()}
@@ -690,7 +797,14 @@ AddNonExistingCode <- function(hierarchies, rowSelect = NULL, inputInOutput = TR
 #' @keywords internal
 #'
 CrossDataDummyHierarchies <- function(dataDummyHierarchies, codeFrames = NULL, makeDimnames = FALSE, useMatrixToDataFrame = TRUE, 
-                                      removeEmpty = FALSE, verbose = FALSE) {
+                                      removeEmpty = FALSE, verbose = FALSE, reOrder = FALSE) {
+  
+  
+  if(reOrder)
+    CrossDataDummyHierarchyHere = CrossDataDummyHierarchyReOrder
+  else
+    CrossDataDummyHierarchyHere =CrossDataDummyHierarchy
+  
   if(verbose){
     if(removeEmpty)
       cat(" [ KhatriRaoRemoveEmpty...")
@@ -716,9 +830,9 @@ CrossDataDummyHierarchies <- function(dataDummyHierarchies, codeFrames = NULL, m
   if (useCodeFrames) {
     for (i in seq_len(n)){ 
       if(i==1)
-        z <- CrossDataDummyHierarchy(dataDummyHierarchy1 = dataDummyHierarchies[[1]], codeFrame1 = codeFrames[[1]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
+        z <- CrossDataDummyHierarchyHere(dataDummyHierarchy1 = dataDummyHierarchies[[1]], codeFrame1 = codeFrames[[1]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
       else
-        z <- CrossDataDummyHierarchy(z[[1]], dataDummyHierarchies[[i]], z[[2]], codeFrames[[i]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
+        z <- CrossDataDummyHierarchyHere(z[[1]], dataDummyHierarchies[[i]], z[[2]], codeFrames[[i]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
       if(removeEmpty){
         rowNonZero <- RowNonZero(z[[1]])
         z[[1]] <- z[[1]][rowNonZero, , drop = FALSE]
@@ -728,9 +842,9 @@ CrossDataDummyHierarchies <- function(dataDummyHierarchies, codeFrames = NULL, m
   } else {
     for (i in seq_len(n)){ 
       if(i==1)
-        z <- CrossDataDummyHierarchy(dataDummyHierarchy1 = dataDummyHierarchies[[1]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
+        z <- CrossDataDummyHierarchyHere(dataDummyHierarchy1 = dataDummyHierarchies[[1]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
       else
-        z <- CrossDataDummyHierarchy(z, dataDummyHierarchies[[i]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
+        z <- CrossDataDummyHierarchyHere(z, dataDummyHierarchies[[i]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
       if(removeEmpty){
         rowNonZero <- RowNonZero(z)
         z <- z[rowNonZero, , drop = FALSE]
@@ -783,8 +897,11 @@ ReductionCrossDataDummyHierarchies <- function(dataDummyHierarchies, codeFrames 
       z <- CrossDataDummyHierarchy(z[[1]], dataDummyHierarchies[[i]], z[[2]], codeFrames[[i]], makeDimnames = makeDimnames, useMatrixToDataFrame = useMatrixToDataFrame)
       
       
-        selecti <- Match(unique(codeFrame[, seq_len(i)]), z[[2]])
-        #w <<- list(unique(codeFrame[, seq_len(i)]), z[[2]])
+        if(i == n) {
+          selecti <- Match(codeFrame[, seq_len(i)], z[[2]])
+        }  else {
+          selecti <- Match(unique(codeFrame[, seq_len(i)]), z[[2]])
+        }
         if (anyNA(selecti)) {
           selecti <- selecti[!is.na(selecti)]
           warning("Not all rowSelect possible. Row removed")  # Sette inn NA isteden??
@@ -854,13 +971,7 @@ SelectionCrossDataDummyHierarchy <- function(dataDummyHierarchies, codeFrame, ve
 
 
 
-#' FixHierarchy
-#'
-#' @param hi hi
-#' @param hierarchyVarNames hierarchyVarNames
-#'
-#' @keywords internal
-#'
+
 FixHierarchy <- function(hi, hierarchyVarNames = c(mapsFrom = "from", mapsTo = "to", sign = "sign", level = "level")) {
   ma <- match(names(hi), hierarchyVarNames)
   wma <- which(!is.na(ma))
@@ -875,13 +986,7 @@ FixHierarchy <- function(hi, hierarchyVarNames = c(mapsFrom = "from", mapsTo = "
 }
 
 
-#' AutoLevel
-#'
-#' @param x x
-#'
-#' @return x
-#' @keywords internal
-#'
+
 AutoLevel <- function(x) {
   mapsFrom <- as.character(x$mapsFrom)
   mapsTo <- as.character(x$mapsTo)
@@ -944,10 +1049,11 @@ AutoLevel <- function(x) {
 #' @param mapsTo Character vector from hierarchy table
 #' @param sign  Numeric vector of either 1 or -1 from hierarchy table
 #' @param level Numeric vector from hierarchy table
-#' @param mapsInput All codes in mapsTo not in mapsFrom (created automatically when NULL) and possibly other codes in input data.
+#' @param mapsInput All codes in mapsFrom not in mapsTo (created automatically when NULL) and possibly other codes in input data.
 #' @param inputInOutput When FALSE all output rows represent codes in mapsTo
 #' @param keepCodes To prevent some codes to be removed when inputInOutput = TRUE
 #' @param unionComplement When TRUE, sign means union and complement instead of addition or subtraction (see note)
+#' @param reOrder When TRUE (FALSE is default) output codes are ordered differently, more similar to a usual model matrix ordering.
 #'
 #' @return
 #' A sparse matrix with row and column and names
@@ -978,7 +1084,7 @@ AutoLevel <- function(x) {
 #' #' # Extend mapsInput - leading to zero columns.
 #' DummyHierarchy(h$mapsFrom, h$mapsTo, h$sign, h$level,
 #'                mapsInput = c(h$mapsFrom[!(h$mapsFrom %in% h$mapsTo)], "Norway", "Finland"))
-DummyHierarchy <- function(mapsFrom, mapsTo, sign, level, mapsInput = NULL, inputInOutput = FALSE, keepCodes = mapsFrom[integer(0)], unionComplement = FALSE) {
+DummyHierarchy <- function(mapsFrom, mapsTo, sign, level, mapsInput = NULL, inputInOutput = FALSE, keepCodes = mapsFrom[integer(0)], unionComplement = FALSE, reOrder = FALSE) {
   
   mapsFrom <- as.character(mapsFrom)  # Ensure character (if factor)
   mapsTo <- as.character(mapsTo)  # Ensure character (if factor)
@@ -1007,9 +1113,15 @@ DummyHierarchy <- function(mapsFrom, mapsTo, sign, level, mapsInput = NULL, inpu
     }
     mNew <- Matrix(0, NROW(m), length(levels(mapsToi)), dimnames = list(levels(mapsFromi), levels(mapsToi)))
     mNew[cbind(as.integer(mapsFromi), as.integer(mapsToi))] <- sign[ri]
-    if (unionComplement) 
-      m <- rbind(m, CrossprodUnionComplement(mNew, m))  # Matrix::rBind(m,  CrossprodUnionComplement(mNew,m))
-    else m <- rbind(m, crossprod(mNew, m))  # Matrix::rBind(m,  crossprod(mNew,m))
+    if(reOrder){
+      if (unionComplement) 
+        m <- rbind(CrossprodUnionComplement(mNew, m),m)  #  Better ordering 
+      else m <- rbind(crossprod(mNew, m),m)  
+    } else {
+      if (unionComplement) 
+        m <- rbind(m, CrossprodUnionComplement(mNew, m))  # Matrix::rBind(m,  CrossprodUnionComplement(mNew,m))
+      else m <- rbind(m, crossprod(mNew, m))  # Matrix::rBind(m,  crossprod(mNew,m))
+    }
   }
   if (!inputInOutput & length(dropInput) > 0) {
     keepRows <- rownames(m)[!(rownames(m) %in% dropInput)]
@@ -1064,7 +1176,11 @@ CrossDataDummyHierarchy <- function(dataDummyHierarchy1, dataDummyHierarchy2 = N
 
 
 ReduceDataByDummyHierarchiesAndValue <- function(data, dummyHierarchies, valueVar, colVar) {
-  sel <- data[, valueVar] != 0
+  if (length(valueVar)>1){
+    sel <- rowSums(abs(data[, valueVar])) != 0
+  } else {
+    sel <- data[, valueVar] != 0
+  }
   for (i in seq_len(length(dummyHierarchies))) {
     if (!is.null(dummyHierarchies[[i]])) {
       keepCodes <- colnames(dummyHierarchies[[i]])[colSums(abs(dummyHierarchies[[i]])) != 0]
@@ -1107,4 +1223,66 @@ GetFirstStringInList <- function(x) {
       z[i] <- x[[i]][1]
   }
   z
+}
+
+
+
+
+KhatriRaoReOrder = function(x,y,make.dimnames = FALSE){
+  a <- nrow(x)
+  b <- nrow(y)
+  r <- rep(b*SeqInc(0,a-1),b) + rep(seq_len(b),each=a)
+  KhatriRao(x, y, make.dimnames = make.dimnames)[r, ,drop=FALSE]
+}
+
+CrossDataDummyHierarchyReOrder <- function(dataDummyHierarchy1, dataDummyHierarchy2 = NULL, codeFrame1 = NULL, codeFrame2 = NULL, makeDimnames = FALSE, useMatrixToDataFrame = TRUE) {
+  if (is.null(dataDummyHierarchy2)) {
+    if (is.null(codeFrame1)) 
+      return(dataDummyHierarchy1) else return(list(dataDummyHierarchy = dataDummyHierarchy1, codeFrame = codeFrame1))
+  }
+  
+  if (is.null(codeFrame1) | is.null(codeFrame2)) 
+    return(KhatriRaoReOrder(dataDummyHierarchy2, dataDummyHierarchy1, make.dimnames = makeDimnames))
+  
+  return(list(dataDummyHierarchy = KhatriRaoReOrder(dataDummyHierarchy2, dataDummyHierarchy1, make.dimnames = makeDimnames), 
+              codeFrame = CrossCodeFramesReOrder(codeFrame1, codeFrame2, useMatrixToDataFrame = useMatrixToDataFrame)))
+}
+
+CrossCodeFramesAReOrder <- function(codeFrame1, codeFrame2) {
+  n1 <- NROW(codeFrame1)
+  n2 <- NROW(codeFrame2)
+  
+  r1 <- rep(seq_len(n1), times = 1,  each = n2)
+  
+  rownames(codeFrame1) <- NULL
+  
+  print(cbind(codeFrame1[r1, , drop = FALSE], codeFrame2))
+  
+  cbind(codeFrame1[r1, , drop = FALSE], codeFrame2)
+}
+
+
+CrossCodeFramesReOrder <- function(codeFrame1, codeFrame2, useMatrixToDataFrame = TRUE) {
+  if (!useMatrixToDataFrame) 
+    return(CrossCodeFramesAReOrder(codeFrame1, codeFrame2))
+
+  n1 <- NROW(codeFrame1)
+  n2 <- NROW(codeFrame2)
+  
+  codeFrame1 <- DataFrameToMatrix(codeFrame1)
+  codeFrame2 <- DataFrameToMatrix(codeFrame2)
+  
+  rownames(codeFrame1) <- NULL
+  rownames(codeFrame2) <- NULL
+  
+  r1 <- rep(seq_len(n1), times = 1,  each = n2)
+  r2 <- rep(seq_len(n2), times = n1, each = 1)
+  
+  z <- cbind(codeFrame1[r1, , drop = FALSE], codeFrame2[r2, , drop = FALSE])
+  
+  attr(z, "namesDF") <- c(attr(codeFrame1, "namesDF"), attr(codeFrame2, "namesDF"))
+  attr(z, "classDF") <- c(attr(codeFrame1, "classDF"), attr(codeFrame2, "classDF"))
+  attr(z, "levelsDF") <- c(attr(codeFrame1, "levelsDF"), attr(codeFrame2, "levelsDF"))
+  
+  MatrixToDataFrame(z)
 }
