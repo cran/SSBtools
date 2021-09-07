@@ -13,6 +13,9 @@ GaussSuppression(
   singleton = rep(FALSE, NROW(x)),
   singletonMethod = "anySum",
   printInc = TRUE,
+  tolGauss = (.Machine$double.eps)^(1/2),
+  whenEmptySuppressed = warning,
+  whenEmptyUnsuppressed = message,
   ...
 )
 }
@@ -30,9 +33,15 @@ GaussSuppression(
 \item{singleton}{Logical vector specifying inner cells for singleton handling.
 Normally, this means cells with 1s when 0s are non-suppressed and cells with 0s when 0s are suppressed.}
 
-\item{singletonMethod}{Method for handling the problem of singletons and zeros: \code{"anySum"} (default), \code{"subSum"}, \code{"subSpace"} or \code{"none"} (see details).}
+\item{singletonMethod}{Method for handling the problem of singletons and zeros: \code{"anySum"} (default), \code{"anySumNOTprimary"}, \code{"subSum"}, \code{"subSpace"} or \code{"none"} (see details).}
 
 \item{printInc}{Printing "..." to console when TRUE}
+
+\item{tolGauss}{A tolerance parameter for sparse Gaussian elimination and linear dependency. This parameter is used only in cases where integer calculation cannot be used.}
+
+\item{whenEmptySuppressed}{Function to be called when empty input to primary suppressed cells is problematic. Supply NULL to do nothing.}
+
+\item{whenEmptyUnsuppressed}{Function to be called when empty input to candidate cells may be problematic. Supply NULL to do nothing.}
 
 \item{...}{Extra unused parameters}
 }
@@ -56,6 +65,8 @@ linear dependency. The default method, \code{"anySum"}, is between the other two
 sums within groups, the aim is to handle all possible sums, also across groups. In addition, \code{"subSumSpace"}  and
 \code{"subSumAny"} are possible methods, primarily for testing These methods are similar to \code{"subSpace"} and \code{"anySum"},
 and additional cells are created as in \code{"subSum"}. It is believed that the extra cells are redundant.
+All the above methods assume that any published singletons are primary suppressed.
+When this is not the case, \code{"anySumNOTprimary"} must be used.
 }
 \examples{
 # Input data

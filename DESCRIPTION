@@ -1,8 +1,8 @@
 Package: SSBtools
 Type: Package
 Title: Statistics Norway's Miscellaneous Tools
-Version: 1.2.0
-Date: 2021-07-02
+Version: 1.2.2
+Date: 2021-09-07
 Authors@R: c(person("Øyvind", "Langsrud", role = c("aut", "cre"),
                     email = "oyl@ssb.no"),
              person("Daniel", "Lupp", role = c("aut")),        
@@ -17,10 +17,10 @@ RoxygenNote: 7.1.1
 Encoding: UTF-8
 Suggests: testthat
 NeedsCompilation: no
-Packaged: 2021-07-02 07:34:48 UTC; oyl
+Packaged: 2021-09-07 15:03:16 UTC; oyl
 Author: Øyvind Langsrud [aut, cre],
   Daniel Lupp [aut],
   Bjørn-Helge Mevik [cph]
 Maintainer: Øyvind Langsrud <oyl@ssb.no>
 Repository: CRAN
-Date/Publication: 2021-07-02 08:00:02 UTC
+Date/Publication: 2021-09-07 16:10:02 UTC
