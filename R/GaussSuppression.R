@@ -9,6 +9,7 @@
 #' It is possible to specify too many (all) indices as `candidates`. 
 #' Indices specified as `primary` or `hidded` will be removed. 
 #' Hidden indices (not candidates or primary) refer to cells that will not be published, but do not need protection. 
+#' All singleton methods, except `"sub2Sum"`, have been implemented with frequency tables in mind.
 #' The singleton method `"subSum"` makes new imaginary primary suppressed cells, which are the sum of the singletons 
 #' within each group. The `"subSpace"` method is conservative and ignores the singleton dimensions when looking for 
 #' linear dependency. The default method, `"anySum"`, is between the other two. Instead of making imaginary cells of 
@@ -17,6 +18,8 @@
 #'  and additional cells are created as in `"subSum"`. It is believed that the extra cells are redundant.
 #'  All the above methods assume that any published singletons are primary suppressed. 
 #'  When this is not the case, `"anySumNOTprimary"` must be used.
+#'  The singleton method `"sub2Sum"` makes new imaginary primary suppressed cells, which are the sum of two inner cells. 
+#'  This is done when a group contains exactly two primary suppressed inner cells provided that at least one of them is singleton.
 #'  
 #'
 #' @param x Matrix that relates cells to be published or suppressed to inner cells. yPublish = crossprod(x,yInner)
@@ -26,11 +29,15 @@
 #' @param hidden     Indices to be removed from the above `candidates` input (see details)  
 #' @param singleton Logical vector specifying inner cells for singleton handling. 
 #'                 Normally, this means cells with 1s when 0s are non-suppressed and cells with 0s when 0s are suppressed.   
-#' @param singletonMethod Method for handling the problem of singletons and zeros: `"anySum"` (default), `"anySumNOTprimary"`, `"subSum"`, `"subSpace"` or `"none"` (see details).
+#' @param singletonMethod Method for handling the problem of singletons and zeros: `"anySum"` (default), `"anySumNOTprimary"`, `"subSum"`, `"subSpace"`, `"sub2Sum"` or `"none"` (see details).
 #' @param printInc Printing "..." to console when TRUE
 #' @param tolGauss A tolerance parameter for sparse Gaussian elimination and linear dependency. This parameter is used only in cases where integer calculation cannot be used.
 #' @param whenEmptySuppressed Function to be called when empty input to primary suppressed cells is problematic. Supply NULL to do nothing.
 #' @param whenEmptyUnsuppressed Function to be called when empty input to candidate cells may be problematic. Supply NULL to do nothing.
+#' @param removeDuplicated Whether to remove duplicated columns in `x` before running the main algorithm. 
+#' @param iFunction A function to be called during the iterations. See the default function, \code{\link{GaussIterationFunction}}, for description of parameters. 
+#' @param iWait The minimum number of seconds between each call to `iFunction`.
+#'              Whenever `iWait<Inf`, `iFunction` will also be called after last iteration.    
 #' @param ... Extra unused parameters
 #'
 #' @return Secondary suppression indices  
@@ -71,8 +78,26 @@
 GaussSuppression <- function(x, candidates = 1:ncol(x), primary = NULL, forced = NULL, hidden = NULL, 
                              singleton = rep(FALSE, NROW(x)), singletonMethod = "anySum", printInc = TRUE, tolGauss = (.Machine$double.eps)^(1/2),
                              whenEmptySuppressed = warning, 
-                             whenEmptyUnsuppressed = message, 
+                             whenEmptyUnsuppressed = message,
+                             removeDuplicated = TRUE, 
+                             iFunction = GaussIterationFunction, iWait = Inf,
                              ...) {
+  
+  if (identical(removeDuplicated, "test")){
+    sysCall <- sys.call()
+    parentFrame <- parent.frame()
+    sysCall["removeDuplicated"] <- TRUE
+    outTRUE <- eval(sysCall, envir = parentFrame)
+    sysCall["removeDuplicated"] <- FALSE
+    outFALSE <- eval(sysCall, envir = parentFrame)
+    if(isTRUE(all.equal(outTRUE, outFALSE))){
+      return(outTRUE)
+    }
+    print(outTRUE)
+    print(outFALSE)
+    stop("removeDuplicated test: Not all equal")
+  }
+  
   if (is.logical(primary)) 
     primary <- which(primary) 
   else 
@@ -98,6 +123,44 @@ GaussSuppression <- function(x, candidates = 1:ncol(x), primary = NULL, forced =
   if (length(hidden)) 
     candidates <- candidates[!(candidates %in% hidden)]
   
+  
+  if (removeDuplicated) {
+    # idxDD <- DummyDuplicated(x, idx = TRUE, rnd = TRUE)
+    idxDD <- DummyDuplicatedSpec(x,  candidates, primary, forced)
+    idxDDunique <- unique(idxDD)
+    
+    if (length(idxDDunique) == length(idxDD)) {
+      removeDuplicated <- FALSE
+    } else {
+      if (length(forced)) { # Needed for warning
+        primary <- primary[!(primary %in% forced)]
+      }
+      
+      idNew <- rep(0L, ncol(x))
+      idNew[idxDDunique] <- seq_len(length(idxDDunique))
+      
+      candidatesOld <- candidates
+      primaryOld <- primary
+      
+      primary <- idNew[unique(idxDD[primary])]
+      candidates <- idNew[unique(idxDD[candidates])]
+      forced <- idNew[unique(idxDD[forced])]
+      x <- x[, idxDDunique, drop = FALSE]
+      
+      if (any(primary %in% forced)) {
+        warning("Forced cells -> All primary cells are not safe (duplicated)")
+      }
+    }
+  }
+  
+  if (!removeDuplicated) {
+    idxDD <- NULL
+    idxDDunique <- NULL
+    candidatesOld <- NULL
+    primaryOld <- NULL
+  }
+  
+  
   candidates <- candidates[!(candidates %in% primary)]
           
   nForced <- length(forced)
@@ -118,7 +181,7 @@ GaussSuppression <- function(x, candidates = 1:ncol(x), primary = NULL, forced =
     return(singletonMethod(x, candidates, primary, printInc, singleton = singleton, nForced = nForced))
   }
   
-  if (singletonMethod %in% c("subSum", "subSpace", "anySum", "anySumNOTprimary", "subSumSpace", "subSumAny", "none")) {
+  if (singletonMethod %in% c("subSum", "subSpace", "anySum", "anySumNOTprimary", "subSumSpace", "subSumAny", "sub2Sum", "none")) {
     
     if(!is.null(whenEmptySuppressed)){
       if(min(colSums(abs(x[, primary, drop = FALSE]))) == 0){
@@ -126,28 +189,59 @@ GaussSuppression <- function(x, candidates = 1:ncol(x), primary = NULL, forced =
       }
     }
     
-    gaussSuppression1 <- GaussSuppression1(x, candidates, primary, printInc, singleton = singleton, nForced = nForced, singletonMethod = singletonMethod, tolGauss=tolGauss, ...)
+    secondary <- GaussSuppression1(x, candidates, primary, printInc, singleton = singleton, nForced = nForced, 
+                                           singletonMethod = singletonMethod, tolGauss=tolGauss, 
+                                           iFunction = iFunction, iWait = iWait,
+                                   main_primary = primary, idxDD = idxDD, idxDDunique = idxDDunique, candidatesOld = candidatesOld, primaryOld = primaryOld,
+                                           ...)
     
-    if(length(gaussSuppression1) & !is.null(whenEmptyUnsuppressed)){
-      lateUnsuppressed <- candidates[SeqInc(1L + min(match(gaussSuppression1, candidates)), length(candidates))]
-      lateUnsuppressed <- lateUnsuppressed[!(lateUnsuppressed %in% gaussSuppression1)]
+    if(length(secondary) & !is.null(whenEmptyUnsuppressed)){
+      lateUnsuppressed <- candidates[SeqInc(1L + min(match(secondary, candidates)), length(candidates))]
+      lateUnsuppressed <- lateUnsuppressed[!(lateUnsuppressed %in% secondary)]
       if(length(lateUnsuppressed)){
         if(min(colSums(abs(x[, lateUnsuppressed, drop = FALSE]))) == 0){
           whenEmptyUnsuppressed("Cells with empty input will never be secondary suppressed. Extend input data with zeros?")
         }
       }
     }
+
+    secondary <- SecondaryFinal(secondary = secondary, primary = primary, idxDD = idxDD, idxDDunique = idxDDunique, candidatesOld = candidatesOld, primaryOld = primaryOld)
     
-    return(gaussSuppression1)
+    return(secondary)
   }
   
   stop("wrong singletonMethod")
 }
 
+# Function to handle removeDuplicated
+SecondaryFinal <- function(secondary, primary, idxDD, idxDDunique, candidatesOld, primaryOld) {
+  if (is.null(idxDD)) {
+    return(secondary)
+  }
+  ma <- match(idxDD[candidatesOld], c(idxDDunique[secondary], idxDDunique[primary]))
+  secondary <- candidatesOld[!is.na(ma)]
+  secondary[!(secondary %in% primaryOld)]
+}
 
-GaussSuppression1 <- function(x, candidates, primary, printInc, singleton, nForced, singletonMethod, tolGauss, testMaxInt = 0, allNumeric = FALSE, ...) {
+
+
+GaussSuppression1 <- function(x, candidates, primary, printInc, singleton, nForced, singletonMethod, tolGauss, testMaxInt = 0, allNumeric = FALSE,
+                              iFunction, iWait, 
+                              main_primary, idxDD, idxDDunique, candidatesOld, primaryOld, # main_primary also since primary may be changed 
+                              ...) {
   
-
+  if (!is.numeric(iWait)) {
+    iWait <- Inf
+  } else {
+    if (is.na(iWait)) iWait <- Inf
+  }
+  if (!is.function(iFunction)) iWait <- Inf
+  use_iFunction <- iWait < Inf
+  
+  if (use_iFunction) {
+    sys_time <- Sys.time()
+  }
+  
   # testMaxInt is parameter for testing 
   # The Integer overflow situation will be forced when testMaxInt is exceeded   
   DoTestMaxInt = testMaxInt > 0
@@ -180,28 +274,35 @@ GaussSuppression1 <- function(x, candidates, primary, printInc, singleton, nForc
     if (singletonNOTprimary) {
       if (singletonMethod != "anySum")
         stop('singletonMethod must be "anySumNOTprimary" when singletons not primary suppressed')
-      warning('singletonMethod is changed to "singletonNOTprimary"')
+      warning('singletonMethod is changed to "anySumNOTprimary"')
     }
   }
   
   
   # make new primary suppressed subSum-cells
-  if (grepl("subSum", singletonMethod)) {
+  if (grepl("subSum", singletonMethod) | singletonMethod == "sub2Sum") {
     if (any(singleton)) {
-      pZ <- x * singleton
-      colZ <- colSums(pZ) > 1
+      if (singletonMethod == "sub2Sum") {
+        pZs <- x * singleton
+        pZ <- x * (rowSums(x[, primary[colSums(x[, primary]) == 1]]) > 0)  #  x * innerprimary
+        colZ <- ((colSums(pZs) > 0) & (colSums(pZ) == 2))
+      } else {
+        pZ <- x * singleton
+        colZ <- colSums(pZ) > 1
+      }
       if (any(colZ)) {
         pZ <- pZ[, colZ, drop = FALSE]
-        nodupl <- which(!duplicated(as.matrix(t(pZ))))
+        nodupl <- which(!duplicated(as.matrix(t(pZ))))     # Possible improvement by DummyDuplicated
         pZ <- pZ[, nodupl, drop = FALSE]
         primary <- c(primary, NCOL(x) + seq_len(NCOL(pZ)))
         x <- cbind(x, pZ)
       }
     }
-    if (singletonMethod == "subSum") 
+    if (singletonMethod == "subSum" | singletonMethod == "sub2Sum") 
       singleton <- FALSE
   }
   
+
   
   if (!any(singleton)) 
     singleton <- NULL
@@ -278,8 +379,13 @@ GaussSuppression1 <- function(x, candidates, primary, printInc, singleton, nForc
         cat(dot)
         flush.console()
       }
-    if (ii > m) 
+    if (ii > m){ 
+      if (printInc) {
+        cat("\n")
+        flush.console()
+      }
       return(candidates[secondary])
+    }
     
     if (nForced > 0 & j == 1) {
       is0Br <- sapply(B$r, length) == 0
@@ -611,6 +717,37 @@ GaussSuppression1 <- function(x, candidates, primary, printInc, singleton, nForc
         secondary[j] <- TRUE
       }
     }
+    if (use_iFunction) {
+      sys_time2 <- Sys.time()
+      if (ii-1L == m) {
+        j_ <- n
+      } else {
+        j_ <- j
+      }
+      if (j_ == n) {
+        iWait <- 0
+      }
+      if (as.numeric(difftime(sys_time2, sys_time), units = "secs") >= iWait){
+        sys_time <- sys_time2
+        false_ <- !secondary
+        
+        allEmptyDecided <- TRUE 
+        if(allEmptyDecided){
+          false_[SeqInc(j_+1,n)] <- (lengths(A$r) == 0)[SeqInc(j_+1,n)]
+          na_ <- !(secondary | false_)  
+        } else { # old code 
+          false_[SeqInc(j_+1,n)] <- FALSE
+          na_    <- !secondary
+          na_[SeqInc(1,j_)] <- FALSE
+        }
+        
+        iFunction(i = j_, I = n, j = ii-1L, J = m,
+                  true =  SecondaryFinal(secondary = candidates[secondary], primary = main_primary, idxDD = idxDD, idxDDunique = idxDDunique, candidatesOld = candidatesOld, primaryOld = primaryOld),
+                  false = SecondaryFinal(secondary = candidates[false_],    primary = integer(0),   idxDD = idxDD, idxDDunique = idxDDunique, candidatesOld = candidatesOld, primaryOld = integer(0)),
+                  na =    SecondaryFinal(secondary = candidates[na_],       primary = integer(0),   idxDD = idxDD, idxDDunique = idxDDunique, candidatesOld = candidatesOld, primaryOld = integer(0)),
+                  ...)
+      }
+    }
   }
   
   # cat("\n")
@@ -731,11 +868,24 @@ Scale2one <- function(x) {
 
 
 
-
-
-
-
-
+# Special version of DummyDuplicated(x, idx = TRUE, rnd = TRUE)
+# Some 0’s changed to other values 
+DummyDuplicatedSpec <- function(x, candidates, primary, forced) {
+  
+  xtu <- XprodRnd(x = x, duplic = FALSE, idx = FALSE, seed = 123)
+  
+  if(length(primary)) xtu[primary][xtu[primary] == 0] <- 1
+  if(length(forced))  xtu[forced][xtu[forced] == 0] <- 2
+  
+  # to ensure whenEmptyUnsuppressed message as without removeDuplicated
+  cand0 <- candidates[xtu[candidates] == 0]
+  cand0 <- cand0[!(cand0 %in% primary)]
+  cand0 <- cand0[!(cand0 %in% forced)]
+  cand0 <- cand0[length(cand0)]
+  xtu[cand0] <- 3
+  
+  match(xtu, xtu)
+}
 
 
 
