@@ -1,7 +1,8 @@
-0eb1a000bfa810d9b769e4e06c433c54 *DESCRIPTION
+7e48be719266c34bb4f22426cc4f408f *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
 cc65899147e311c7dcae1551b7022e6d *NAMESPACE
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
+16cef3f52a7efbeb1ab801be610dded5 *R/AnyEliminatedBySingleton.R
 defb34cf42de7247c1792cab52970a32 *R/As_TsparseMatrix.R
 2931e50cd1d6e3ceb661dbc803d0c28f *R/AutoHierarchies.R
 2bf8d517d986ff9948a9ff62485b88f3 *R/AutoSplit.r
@@ -24,7 +25,7 @@ f2fe3d17cad4b919a38e02b8bf244964 *R/FormulaSelection.R
 85d057a0f1d7d148916c7e7c6a5690cb *R/FormulaSums.R
 07f26d94bb8dd552c58911d174145210 *R/GaussIndependent.R
 34ce598689139eddeafb371340715111 *R/GaussIterationFunction.R
-a0784111b9672dc5076d1d8b8950ac64 *R/GaussSuppression.R
+40bd0eb1b60ad89715853158d877f649 *R/GaussSuppression.R
 a8afa4c0ed4d18f0dd7d95e5b988e327 *R/HierarchicalGroups.R
 127b96fc60070b81a2bf1ca7aeb57b64 *R/Hierarchies2ModelMatrix.R
 4d84cc18ece7555d930d07d2988c56b8 *R/HierarchiesAndFormula2ModelMatrix.R
@@ -38,7 +39,7 @@ b8510266c8a2ffc93897988a7891e3ae *R/Matrix2list.R
 252f6eedebc55c757d0193fd2a451161 *R/MatrixPaste.R
 e9726f330c71f61feabbf2fd3c8efc3a *R/Mipf.R
 d07a9af610cfc91ae4fdcd521e9be160 *R/ModelMatrix.R
-f3711b2ee83e758228a9a57e1d2fc97d *R/NumSingleton.R
+c1734af5049bff5d849606e079deedb5 *R/NumSingleton.R
 58fa7c6c5c301915e0057c745c571b96 *R/PatternMatching.R
 70aaf4c503dddff5ebaedaa7700e78f2 *R/RbindAllCbindIdMatch.r
 a55320f30032addd1e93e997ee3c0bc3 *R/Reduce0exact.R
@@ -50,6 +51,7 @@ a7dd787c3773141c58f4277dc486c199 *R/SSBtoolsData.R
 9cb647c86652c06bbc9f7eaaa905ee04 *R/UniqueSeq.R
 dd698edd4cf220ae83e7baca71ba4a8c *R/WorkaroundMatrixBug6728.R
 2ecf694d3686299c91f3b35478fccc65 *R/aggregate_multiple_fun.R
+5fe4db95f89542e157fcd5a4c6596271 *R/anySumNOTprimary.R
 cd76ec02a4df876192a50ceca85ac58a *R/dummy_aggregate.R
 32dbfcbd039bdcb98b99d2a666a4a4c6 *R/inc_default.R
 029f04f581a0be1c07bb74cbb225e29c *R/matlabColon.R
@@ -92,7 +94,7 @@ c09d696549b5d3141eb9395c203ad6c7 *man/FormulaSelection.Rd
 2b7ebdaa26d41c3d6c7807543ed24a20 *man/FormulaSums.Rd
 94d4e4e6612c0206a79657ba259b03e4 *man/GaussIndependent.Rd
 2dd7854338167ec04d56fe89face2251 *man/GaussIterationFunction.Rd
-bfb86677fd16708b39a840d0f19f3f6c *man/GaussSuppression.Rd
+95d60f1e022f48f9ac9964feca4b7e64 *man/GaussSuppression.Rd
 761b9ef549d057defff6d180ba79ec33 *man/HierarchicalGroups.Rd
 3b96e8b8068a141d63aa457b6cdd2448 *man/HierarchicalGroups2.Rd
 151c26a0c61eb6133c4dfb603a55ebc0 *man/HierarchicalGroups3.Rd
@@ -114,7 +116,7 @@ cd08e2dc9a7750d6b6ea4f5c0f1cdce6 *man/MatrixPaste.Rd
 1f69fbc9a414465c62aff9f42dca8187 *man/Mipf.Rd
 97a5b9bfe46fdfe0dcef78b1dcae65e8 *man/ModelMatrix.Rd
 966f7560128cabc05ef384f19c779599 *man/Model_Matrix.Rd
-67b1afe57f7d2ea9b4169e8460d02834 *man/NumSingleton.Rd
+00201b250c840d89a1fac3d844433f4c *man/NumSingleton.Rd
 d289f0ef67dca70cb6ade882d66f5de5 *man/Number.Rd
 cf3ba5234575961f514fa3ade2032726 *man/RbindAll.Rd
 cf7aaefa441cf59328e3b4bf8d6c8fe5 *man/Reduce0exact.Rd
