@@ -2,7 +2,10 @@
 #'
 #' By default this function return sums if the formula contains a response part and a model matrix otherwise
 #'
-#' The model matrix is constructed by calling fac2sparse() repeatedly. The sums are computed by calling aggregate() repeatedly.
+#' In the original version of the function the model matrix was constructed by 
+#' calling \code{\link[Matrix]{fac2sparse}} repeatedly. 
+#' Now this is replaced by a single call to \code{\link[Matrix]{sparseMatrix}}.
+#' The sums are computed by calling \code{\link[stats]{aggregate}} repeatedly.
 #' Hierarchical variables handled when constructing cross table.
 #' Column names constructed from the cross table.
 #' The returned model matrix includes the attribute \code{startCol} (see last example line).
@@ -20,13 +23,21 @@
 #' @param avoidHierarchical Whether to avoid treating of hierarchical variables. Instead of logical, variables can be specified.  
 #' @param includeEmpty  When `TRUE`, empty columns of the model matrix (only zeros) are included. 
 #'                      This is not implemented when a response term is included in the formula and `dropResponse = FALSE` (error will be produced).  
+#' @param NAomit When `TRUE`, NAs in the grouping variables are omitted in output and not included as a separate category. 
+#'               Technically, this parameter is utilized through the function \code{\link{RowGroups}}.
+#' @param rowGroupsPackage Parameter `pkg` to the function \code{\link{RowGroups}}.   
+#'                         Default is `"base"`. 
+#'                         Setting this parameter to `"data.table"` can improve speed.       
+#' @param viaSparseMatrix When TRUE, the model matrix is constructed by a single call to \code{\link[Matrix]{sparseMatrix}}. 
+#'          Setting it to FALSE reverts to the previous behavior. 
+#'          This parameter is included for testing purposes and will likely be removed in future versions.
 #' @param ... Extra unused parameters
 #'
 #' @return
 #'   A matrix of sums, a sparse model matrix or a list of two or three elements (model matrix and cross table and sums when relevant).
 #'   
 #' @importFrom stats aggregate as.formula delete.response terms
-#' @importFrom Matrix fac2sparse
+#' @importFrom Matrix fac2sparse sparseMatrix
 #' @importFrom utils flush.console
 #' 
 #' @seealso \code{\link{ModelMatrix}}
@@ -47,7 +58,11 @@
 FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, total = "Total", printInc = FALSE, 
                         dropResponse = FALSE, makeModelMatrix = NULL, sep = "-", sepCross = ":", 
                         avoidHierarchical = FALSE, 
-                        includeEmpty = FALSE,  ...) {
+                        includeEmpty = FALSE, 
+                        NAomit = TRUE,
+                        rowGroupsPackage = "base",
+                        viaSparseMatrix = TRUE, 
+                        ...) {
   
   hg <- NULL  # Possible input in a future version
  
@@ -72,6 +87,9 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
     stop("'includeEmpty = TRUE' with response is not implemented")
   }
   
+  if (includeEmpty & !(makeNames | crossTable)) {
+    stop("'includeEmpty = TRUE' with chosen makeNames/crossTable  is not implemented")
+  }
   
   if (is.null(makeModelMatrix)) 
     makeModelMatrix <- !response
@@ -119,12 +137,15 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
   firstROW <- as.matrix(firstROW)
   firstROW[, ] <- total
   rownames(firstROW) <- NULL
-  allRows <- firstROW
+  
+  nFac <- NCOL(fac)
+  
+  allRows <- vector("list", nFac + 1L)
   
   if (intercept) 
-    allRows <- firstROW 
+    allRows[[1L]] <- firstROW 
   else 
-    allRows <- firstROW[integer(0), , drop = FALSE]
+    allRows[[1L]] <- firstROW[integer(0), , drop = FALSE]
   
   if (attr_startCol) {
     # Copy from HierarchiesAndFormula2ModelMatrix
@@ -137,10 +158,45 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
     }
   }
   
+  entries <- rep(nrow(data), nFac + as.integer(intercept))
+  if (NAomit) {
+    faccolNA <- rep(NA, length(faccol))
+    for (i in seq_along(faccolNA)) {
+      faccolNA[i] <- anyNA(data[, faccol[i]])
+    }
+    for (k in seq_len(nFac)) {
+      if (any(faccolNA[fac[, k]])) {
+        rowNA <- FALSE
+        for (i in faccol[fac[, k]][faccolNA[fac[, k]]]) {
+          rowNA <- rowNA | is.na(data[, i])
+        }
+        entries[k] <- entries[k] - sum(rowNA)
+      }
+    }
+  }
+  entries <- sum(entries)
+  if (entries > .Machine$integer.max) {
+    stop(paste("A matrix of", entries, "nonzero entries cannot be created. Limit is 2^31-1."))
+  }
+  
   if (makeModelMatrix) {
-    m <- fac2sparse(rep(1, NROW(data)))
-    if (!intercept) 
-      m <- m[integer(0), , drop = FALSE]
+    if (viaSparseMatrix) {
+      nrow_data <- NROW(data)
+      m <- list(i = rep(1, entries), j = rep(1, entries))
+      seq_len_nrow <- seq_len(nrow_data)
+      if (intercept) {
+        m$i[seq_len_nrow] <- seq_len_nrow
+        last_m_index <- nrow_data
+        last_m_j <- 1L
+      } else {
+        last_m_index <- 0L
+        last_m_j <- 0L
+      }
+    } else {
+      m <- fac2sparse(rep(1, NROW(data)))
+      if (!intercept)
+        m <- m[integer(0), , drop = FALSE]
+    }
   }
   
   if (response) {
@@ -155,11 +211,13 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
     }
   }
   
-  nFac <- NCOL(fac)
-  
   for (k in seq_len(nFac)) {
     if (attr_startCol) {
-      startCol <- c(startCol, nrow(m) + 1L)
+      if (viaSparseMatrix) {
+        startCol <- c(startCol, last_m_j + 1L)
+      } else {
+        startCol <- c(startCol, nrow(m) + 1L)
+      }
     }
                   
     if (printInc) 
@@ -170,7 +228,10 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
     ck <- faccol[fac[, k]]
     
     if (makeNames | crossTable | response) 
-      rg <- RowGroups(data[, ck, drop = FALSE], returnGroups = TRUE)
+      rg <- RowGroups(data[, ck, drop = FALSE], 
+                      returnGroups = TRUE, 
+                      NAomit = NAomit, 
+                      pkg = rowGroupsPackage)
     
     if (response) {
       rg1RowGroups735345 <- rg[[1]]
@@ -200,36 +261,79 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
         fr[, hgcoli[ck]] <- ur else {
           for (ick in unique(hgcolick)) fr[, ick] <- MatrixPaste(ur[, hgcolick == ick, drop = FALSE], sep = sepCross)
         }
-      allRows <- rbind(allRows, fr)
+      allRows[[k + 1L]] <- fr
+    } else { 
       if (makeModelMatrix) {
-        #m <- rbind(m, fac2sparse(rg[[1]])) 
-        m <- rbind(m, fac2sparse(rg1, drop.unused.levels = FALSE)) 
+        rg1 <- RowGroups(data[, ck, drop = FALSE], 
+                         returnGroups = FALSE, 
+                         NAomit = NAomit, 
+                         pkg = rowGroupsPackage)
       }
-    } else 
-      if (makeModelMatrix) 
-        m <- rbind(m, fac2sparse(RowGroups(data[, ck, drop = FALSE], returnGroups = FALSE)))
+    }
+    if (makeModelMatrix) {
+      if (viaSparseMatrix) {
+        if (is.factor(rg1)) {
+          # n_j <- max(as.integer(levels(rg1)))
+          n_j <- length(levels(rg1))   # Use length() for better clarity than line above
+          # rg1 <- as.integer(as.character(rg1))   
+          rg1 <- as.integer(rg1)   # This line since integers above is wrong here  
+        } else {
+          n_j <- max(rg1, na.rm = TRUE)
+        }
+        if (anyNA(rg1)) {
+          finite_rg1 <- which(is.finite(rg1))
+          m_ind <- last_m_index + seq_len(length(finite_rg1))
+          m$i[m_ind] <- finite_rg1
+          m$j[m_ind] <- last_m_j + rg1[finite_rg1]
+          last_m_index <- last_m_index + length(finite_rg1)
+        } else {
+          m_ind <- last_m_index + seq_len_nrow
+          m$i[m_ind] <- seq_len_nrow
+          m$j[m_ind] <- last_m_j + rg1
+          last_m_index <- last_m_index + nrow_data
+        }
+        last_m_j <- last_m_j + n_j
+      } else {
+        m <- rbind(m, fac2sparse(rg1, drop.unused.levels = FALSE))
+      }
+    }
   }
   
+  if (makeModelMatrix) {
+    if (viaSparseMatrix) {
+      m <- sparseMatrix(i = m$i, j = m$j, x = 1, dims = c(nrow_data, last_m_j))
+    }
+    else {
+      m <- Matrix::t(m)
+    }
+  }
+  
+  if (makeNames | crossTable) {
+    allRows <- do.call("rbind", allRows)
+  }
   
   if (makeNames) {
     rowNames <- MatrixPaste(allRows, sep = sep)
     if (makeModelMatrix) 
-      rownames(m) <- rowNames
+      colnames(m) <- rowNames
     if (response) 
       rownames(allSums) <- rowNames
   }
   
-  if (attr_startCol) {
+  if (attr_startCol & makeModelMatrix) {
     names(startCol) <- termNames
+    attr(m, "startCol") <- startCol
+  }
+  
+  # Possible to check entries calculation
+  if (FALSE) if (makeModelMatrix) {
+    if (entries != sum(m != 0)) {
+      stop("Wrong entries calculation")
+    }
   }
   
   if ((makeModelMatrix) & (!crossTable) & (!response)) {
-    if (attr_startCol) {
-      m <- Matrix::t(m)
-      attr(m, "startCol") <- startCol
-      return(m)
-    }
-    return(Matrix::t(m))
+    return(m)
   }
   
   if ((!makeModelMatrix) & (!crossTable) & (response)) 
@@ -238,12 +342,7 @@ FormulaSums <- function(data, formula, makeNames = TRUE, crossTable = FALSE, tot
   if (!crossTable) 
     allRows <- NULL
   
-  if (makeModelMatrix) {
-    m <- Matrix::t(m)
-    if (attr_startCol) {
-      attr(m, "startCol") <- startCol
-    }
-  } else {
+  if (!makeModelMatrix) {
     m <- NULL
   }
   
