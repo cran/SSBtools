@@ -1,7 +1,7 @@
-2fde180d9489a5fee876802cee5e4517 *DESCRIPTION
+746116bdf739e0d86d95301ad663360f *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-4412a5c13c9e64c94747f3f8ef2130de *NAMESPACE
-1f4e825c40c17032e23c743244ab9c4d *NEWS.md
+dda8ddf8f1535d7a960defb0bf398198 *NAMESPACE
+d2d55728bf30ee0a8c28a3c81aa11556 *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 16cef3f52a7efbeb1ab801be610dded5 *R/AnyEliminatedBySingleton.R
 defb34cf42de7247c1792cab52970a32 *R/As_TsparseMatrix.R
@@ -23,7 +23,7 @@ a698af3d472cc1a1445e291f1bad2d2e *R/Extend0.R
 e67c2b534649096ecf070c249323b25a *R/FindDisclosiveCells.R
 1ae23ebe8c984857cb990ab65efee329 *R/FindHierarchies.R
 62ce0556c4047f2accbac8273c8c0af2 *R/FindTableGroup.R
-f2fe3d17cad4b919a38e02b8bf244964 *R/FormulaSelection.R
+2243e80e6b46a28f050be49a4dba40de *R/FormulaSelection.R
 cd1ce904c21d5b60016f2615df4c937f *R/FormulaSums.R
 07f26d94bb8dd552c58911d174145210 *R/GaussIndependent.R
 34ce598689139eddeafb371340715111 *R/GaussIterationFunction.R
@@ -96,7 +96,7 @@ db269a52887e81bc796b35326589557d *man/Extend0.Rd
 94f885ed5169fbf0f45f60add2256a4f *man/FindTableGroup.Rd
 8a370e3338bd358ca4d7cd9f55b391c2 *man/ForceCharacterDataFrame.Rd
 caa87114b7f08f1f16219cbd10b0e79e *man/ForceFactorDataFrame.Rd
-c09d696549b5d3141eb9395c203ad6c7 *man/FormulaSelection.Rd
+ab6a01ec3e174dfa6e206fbaeb8f1f25 *man/FormulaSelection.Rd
 33e09859e8ac7f366ededfe331ab653f *man/FormulaSums.Rd
 94d4e4e6612c0206a79657ba259b03e4 *man/GaussIndependent.Rd
 2dd7854338167ec04d56fe89face2251 *man/GaussIterationFunction.Rd
