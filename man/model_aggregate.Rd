@@ -12,10 +12,16 @@ model_aggregate(
   hierarchies = NULL,
   formula = NULL,
   dim_var = NULL,
+  total = NULL,
+  input_in_output = NULL,
   remove_empty = NULL,
+  avoid_hierarchical = NULL,
   preagg_var = NULL,
   dummy = TRUE,
   pre_aggregate = dummy,
+  aggregate_pkg = "base",
+  aggregate_na = TRUE,
+  aggregate_base_order = FALSE,
   list_return = FALSE,
   pre_return = FALSE,
   verbose = TRUE,
@@ -24,7 +30,8 @@ model_aggregate(
 )
 }
 \arguments{
-\item{data}{A data frame containing data to be aggregated}
+\item{data}{Input data containing data to be aggregated, typically a data frame, tibble, or data.table.
+If data is not a classic data frame, it will be coerced to one internally.}
 
 \item{sum_vars}{Variables to be summed. This will be done via matrix multiplication.}
 
@@ -40,9 +47,18 @@ This will be done via \code{\link{aggregate_multiple_fun}} and \code{\link{dummy
 
 \item{dim_var}{The \code{dimVar}      parameter to \code{\link{ModelMatrix}}}
 
+\item{total}{When non-NULL, the \code{total} parameter to \code{\link{ModelMatrix}}.
+Thus, the actual default value is \code{"Total"}.}
+
+\item{input_in_output}{When non-NULL, the \code{inputInOutput} parameter to \code{\link{ModelMatrix}}.
+Thus, the actual default value is \code{TRUE}.}
+
 \item{remove_empty}{When non-NULL, the \code{removeEmpty} parameter to \code{\link{ModelMatrix}}.
 Thus, the actual default value is \code{TRUE} with formula input without hierarchy and
 otherwise \code{FALSE} (see \code{\link{ModelMatrix}}).}
+
+\item{avoid_hierarchical}{When non-NULL, the \code{avoidHierarchical} parameter to \code{\link{Formula2ModelMatrix}},
+which is an underlying function of \code{\link{ModelMatrix}}.}
 
 \item{preagg_var}{Extra variables to be used as grouping elements in the pre-aggregate step}
 
@@ -55,6 +71,17 @@ Note that all original \code{fun_vars} observations are retained in the aggregat
 However, \code{pre_aggregate} must be set to \code{FALSE} when the \code{dummy_aggregate} parameter \code{dummy} is set to \code{FALSE}
 since then \code{\link{unlist}} will not be run.
 An exception to this is if the \code{fun} functions are written to handle list data.}
+
+\item{aggregate_pkg}{Package used to pre-aggregate.
+Parameter \code{pkg} to \code{\link{aggregate_by_pkg}}.}
+
+\item{aggregate_na}{Whether to include NAs in the grouping variables while preAggregate.
+Parameter \code{include_na} to \code{\link{aggregate_by_pkg}}.}
+
+\item{aggregate_base_order}{Parameter \code{base_order} to \code{\link{aggregate_by_pkg}}, used when pre-aggregate.
+The default is set to \code{FALSE} to avoid unnecessary sorting operations.
+When \code{TRUE}, an attempt is made to return the same result with \code{data.table} as with base R.
+This cannot be guaranteed due to potential variations in sorting behavior across different systems.}
 
 \item{list_return}{Whether to return a list of separate components including the model matrix \code{x}.}
 

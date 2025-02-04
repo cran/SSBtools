@@ -9,7 +9,8 @@
 #' An attribute called `startCol` has been added to the output data frame to make this functionality work.
 #' 
 #'
-#' @param data A data frame containing data to be aggregated 
+#' @param data Input data containing data to be aggregated, typically a data frame, tibble, or data.table. 
+#'             If data is not a classic data frame, it will be coerced to one internally.  
 #' @param sum_vars Variables to be summed. This will be done via matrix multiplication. 
 #' @param fun_vars Variables to be aggregated by supplied functions.  
 #'      This will be done via \code{\link{aggregate_multiple_fun}} and \code{\link{dummy_aggregate}} and 
@@ -18,9 +19,15 @@
 #' @param hierarchies The `hierarchies` parameter to \code{\link{ModelMatrix}}
 #' @param formula     The `formula`     parameter to \code{\link{ModelMatrix}} 
 #' @param dim_var     The `dimVar`      parameter to \code{\link{ModelMatrix}}
+#' @param total       When non-NULL, the `total` parameter to \code{\link{ModelMatrix}}.
+#'                    Thus, the actual default value is `"Total"`. 
+#' @param input_in_output When non-NULL, the `inputInOutput` parameter to \code{\link{ModelMatrix}}.  
+#'                        Thus, the actual default value is `TRUE`.                    
 #' @param remove_empty  When non-NULL, the `removeEmpty` parameter to \code{\link{ModelMatrix}}.
 #'                    Thus, the actual default value is `TRUE` with formula input without hierarchy and 
 #'                    otherwise `FALSE` (see \code{\link{ModelMatrix}}).
+#' @param avoid_hierarchical  When non-NULL, the `avoidHierarchical` parameter to \code{\link{Formula2ModelMatrix}},
+#'                    which is an underlying function of \code{\link{ModelMatrix}}.                
 #' @param preagg_var  Extra variables to be used as grouping elements in the pre-aggregate step
 #' @param dummy       The `dummy`       parameter to \code{\link{dummy_aggregate}}.
 #'                    When `TRUE`, only 0s and 1s are assumed in the generated model matrix. 
@@ -30,6 +37,14 @@
 #'                    However, `pre_aggregate` must be set to `FALSE` when the `dummy_aggregate` parameter `dummy` is set to `FALSE` 
 #'                    since then \code{\link{unlist}} will not be run. 
 #'                    An exception to this is if the `fun` functions are written to handle list data. 
+#' @param aggregate_pkg Package used to pre-aggregate. 
+#'                      Parameter `pkg` to \code{\link{aggregate_by_pkg}}.
+#' @param aggregate_na Whether to include NAs in the grouping variables while preAggregate. 
+#'                     Parameter `include_na` to \code{\link{aggregate_by_pkg}}.
+#' @param aggregate_base_order Parameter `base_order` to \code{\link{aggregate_by_pkg}}, used when pre-aggregate.  
+#'                             The default is set to `FALSE` to avoid unnecessary sorting operations.  
+#'                             When `TRUE`, an attempt is made to return the same result with `data.table` as with base R.
+#'                             This cannot be guaranteed due to potential variations in sorting behavior across different systems.
 #' @param list_return Whether to return a list of separate components including the model matrix `x`.
 #' @param pre_return  Whether to return the pre-aggregate data as a two-component list. Can also be combined with `list_return` (see examples).
 #' 
@@ -135,14 +150,28 @@ model_aggregate = function(
   hierarchies = NULL,
   formula = NULL,
   dim_var = NULL,
+  total = NULL,
+  input_in_output = NULL,
   remove_empty = NULL,
+  avoid_hierarchical = NULL,
   preagg_var = NULL,
   dummy = TRUE,
   pre_aggregate = dummy,
+  aggregate_pkg = "base",
+  aggregate_na = TRUE,
+  aggregate_base_order = FALSE,
   list_return = FALSE,
   pre_return = FALSE,
   verbose = TRUE,
   mm_args = NULL, ...) {
+  
+  data <- as.data.frame(data)
+  # Note: 
+  #   "if (!(pre_aggregate & aggregate_pkg == "data.table"))"
+  #       not used above 
+  # since then sum_data <- data.table::copy(data) needed below 
+  # but this is before the data.table availability check
+  
   
   if (!length(sum_vars)) {
     sum_vars <- NULL
@@ -198,14 +227,33 @@ model_aggregate = function(
       flush.console()
     }
     if (!is.null(fun_vars)) {
-      data <- aggregate(data[unique_fun_vars], data[unique(c(d_var, preagg_var))], function(x) x, simplify = FALSE)
+      if (aggregate_pkg == "data.table") {  # Explicit list needed when data.table
+        fun_x_x <- function(x) list(x)      # Otherwise there will be more rows
+      } else {
+        fun_x_x <- function(x) x            # Same as before
+      }
+      data <- aggregate_by_pkg(data = data, 
+                               by = unique(c(d_var, preagg_var)), 
+                               var = unique_fun_vars, 
+                               pkg = aggregate_pkg, 
+                               include_na = aggregate_na, 
+                               fun = fun_x_x, 
+                               base_order = aggregate_base_order,
+                               simplify = FALSE)
     }
     if (verbose) {
       cat(">")
       flush.console()
     }
     if (!is.null(sum_vars)) {
-      sum_data <- aggregate(sum_data[unique(sum_vars)], sum_data[unique(c(d_var, preagg_var))], sum, simplify = TRUE)
+      sum_data <- aggregate_by_pkg(data = sum_data,
+                                   by = unique(c(d_var, preagg_var)), 
+                                   var = unique(sum_vars), 
+                                   pkg = aggregate_pkg, 
+                                   include_na = aggregate_na, 
+                                   fun = sum, 
+                                   base_order = aggregate_base_order, 
+                                   simplify = TRUE)     
     }
     if (is.null(fun_vars)) {
       data <- sum_data[unique(c(d_var, preagg_var))]
@@ -248,8 +296,17 @@ model_aggregate = function(
     cat("[ModelMatrix")
     flush.console()
   }
+  if (!is.null(input_in_output)) {
+    mm_args <- c(mm_args, list(inputInOutput = input_in_output))
+  }
+  if (!is.null(total)) {
+    mm_args <- c(mm_args, list(total = total))
+  }
   if (!is.null(remove_empty)) {
     mm_args <- c(mm_args, list(removeEmpty = remove_empty))
+  }
+  if (!is.null(avoid_hierarchical)) {
+    mm_args <- c(mm_args, list(avoidHierarchical = avoid_hierarchical))
   }
   if (is.null(mm_args)) {
     mm <- ModelMatrix(data, hierarchies = hierarchies, formula = formula, dimVar = dim_var, crossTable = TRUE)
