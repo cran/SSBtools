@@ -16,6 +16,10 @@
 #' By default, it is set to `TRUE`, preventing excessive data extension and aligning with 
 #' the default behavior of [Formula2ModelMatrix()], where `avoidHierarchical = FALSE`.
 #' 
+#' An attribute `table_formulas` is added to `formula` before `table_fun()` is called.  
+#' This attribute contains the version of `table_formulas` after applying `substitute_vars`.  
+#' This allows for special use in the function `table_fun()`.
+#' 
 #' Note: The use of `total_collapse` internally allows handling of variable names not present in the data. 
 #' This ensures flexibility when modifying the `table_formulas` parameter.
 #'
@@ -33,6 +37,8 @@
 #' @param total A string used to name totals. Passed to both `table_fun` and [total_collapse()].  
 #' @param hierarchical_extend0 Controls automatic hierarchy generation for [Extend0()]. 
 #'                              See "Details" for more information. 
+#' @param term_labels Logical. If `TRUE`, a `term_labels` column (as constructed by [output_term_labels()]) 
+#'                    is included as the first column of the output.
 #'
 #' @return A single `data.frame` containing results for all tables defined in `table_formulas`.
 #' @export
@@ -48,7 +54,9 @@
 #'                    substitute_vars = list(region = c("geo", "eu"), region1 = "eu"), 
 #'                    collapse_vars = list(sector = c("sector2", "sector4")), 
 #'                    sum_vars = "value", 
-#'                    total = "T")
+#'                    total = "T",
+#'                    term_labels = TRUE)
+#'                    
 tables_by_formulas <- function(data,
                                table_fun, 
                                ..., 
@@ -57,7 +65,8 @@ tables_by_formulas <- function(data,
                                auto_collapse = TRUE,
                                collapse_vars = NULL, 
                                total = "Total",
-                               hierarchical_extend0 = TRUE) {
+                               hierarchical_extend0 = TRUE,
+                               term_labels = FALSE) {
   
   if (length(substitute_vars)) {
     for (i in seq_along(table_formulas)) {
@@ -67,6 +76,8 @@ tables_by_formulas <- function(data,
   }
   
   formula <- combine_formulas(table_formulas)
+  
+  attr(formula, "table_formulas") <- table_formulas
   
   a <- table_fun(data, ..., 
                  formula = formula, 
@@ -78,11 +89,11 @@ tables_by_formulas <- function(data,
   preserved_attrs <- attributes(a)
   preserved_attrs <- preserved_attrs[setdiff(names(preserved_attrs), c("names", "class", "row.names"))]
   
-  table_indicators <- as.data.frame(matrix(NA, nrow(a), length(table_formulas)))
-  names(table_indicators) <- names(table_formulas)
+  table_memberships <- as.data.frame(matrix(NA, nrow(a), length(table_formulas)))
+  names(table_memberships) <- names(table_formulas)
   
   for (i in seq_along(table_formulas)) {
-    table_indicators[[i]] <- formula_selection(a, table_formulas[[i]], logical = TRUE)
+    table_memberships[[i]] <- formula_selection(a, table_formulas[[i]], logical = TRUE)
   }
   
   if (auto_collapse & length(substitute_vars)) {
@@ -93,13 +104,17 @@ tables_by_formulas <- function(data,
     a <- total_collapse_allow_missing(a, collapse_vars, total = total) 
   }
   
-  a <- cbind(a, table_indicators)
+  a <- cbind(a, table_memberships)
 
   # Restore the preserved attributes if they do not already exist
   for (attr_name in names(preserved_attrs)) {
     if (is.null(attr(a, attr_name))) {
       attr(a, attr_name) <- preserved_attrs[[attr_name]]
     }
+  }
+  
+  if (term_labels) {
+    a <- cbind(term_labels = output_term_labels(a), a)
   }
   
   a
