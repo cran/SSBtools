@@ -1,7 +1,7 @@
-77701d58afe913b71dcf6edfaa333115 *DESCRIPTION
+6b30a0537c2a0fa5ffe3cb43270c65a0 *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-3e2e2fccad20c922df9a2a4aae2ff3a9 *NAMESPACE
-2bf27c65c0ad6dd47b0065c589547905 *NEWS.md
+d127f9c64312c80e47bc01eac3d8e6dc *NAMESPACE
+f46bbb505fea116f487a4a7da1614a2d *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 e53c2f714b279d51a6bf5e6559c9bccd *R/AnyEliminatedByMultiple.R
 d587659a7d5485322517ef2a27ac6ca0 *R/As_TsparseMatrix.R
@@ -13,7 +13,7 @@ b61b4967563897ccfeba1c2ffc9c0715 *R/CheckInput.r
 cf977b36f9a6407abe84f148f9cfa006 *R/DimList2Hierarchy.R
 3f30a33f38ae0f32cd0a91e90f399469 *R/Div.R
 96ab67c74fd5f76498662664c083ff5e *R/DummyApply.R
-25ec05a7f16b4552492456376e00b8ca *R/DummyDuplicated.R
+2b5ec35be3fe3fdb59ce60a978ea4a65 *R/DummyDuplicated.R
 8defaee9b4260224f41de428b38d9eb4 *R/DummyHierarchies.R
 ae591776652ea609fe46c20496dc22c2 *R/Extend0.R
 c5648edf1ab29268652bf3467fac14a7 *R/Extend0fromModelMatrixInput.R
@@ -28,7 +28,7 @@ bc5d0943f5891f57cf8c512ccac66f6b *R/FormulaSelection.R
 c2d4f9350a0c67a983ef1ca309b0c08d *R/FormulaSums.R
 0ed0ff5a5d847aa8360f1baca86f445a *R/GaussIndependent.R
 34ce598689139eddeafb371340715111 *R/GaussIterationFunction.R
-58d8f3c13881d6c7f9b217d03855320c *R/GaussSuppression.R
+56bbe82aa3f631a25e4bf3a05cbb362e *R/GaussSuppression.R
 a8afa4c0ed4d18f0dd7d95e5b988e327 *R/HierarchicalGroups.R
 ee10360bd903168151c870fc7e254cb8 *R/Hierarchies2ModelMatrix.R
 e746896cbed35d21d3dfe1fde8489d73 *R/HierarchiesAndFormula2ModelMatrix.R
@@ -47,7 +47,7 @@ f90b7c0cfdbcc0a6c2c8073fa946c409 *R/NumSingleton.R
 b5dd5fb4c5d33d06ca808f8d741fcda7 *R/RbindAllCbindIdMatch.r
 d55c4fd94dd1fa67cfc664de643b6ad7 *R/Reduce0exact.R
 103eea35dab5a3b692763005fe14bc6a *R/RoundWhole.R
-6ad8db46e27af6c6fa77815d568f2f25 *R/RowGroups.R
+3f596b535d3d57d640eef12265906ea8 *R/RowGroups.R
 a7dd787c3773141c58f4277dc486c199 *R/SSBtoolsData.R
 5e61937a8d319e62197f4c5861d66769 *R/SortRows.R
 4a2dfb15c4e3532eb3cd0fe7908bacbf *R/Stack.R
@@ -111,7 +111,7 @@ caa87114b7f08f1f16219cbd10b0e79e *man/ForceFactorDataFrame.Rd
 33e09859e8ac7f366ededfe331ab653f *man/FormulaSums.Rd
 f5d49950972512cf96ee7643fcb1d458 *man/GaussIndependent.Rd
 2dd7854338167ec04d56fe89face2251 *man/GaussIterationFunction.Rd
-62d12652a12f0e451968487e384be475 *man/GaussSuppression.Rd
+65f71b8df595f4840fe3d7e9692d8710 *man/GaussSuppression.Rd
 761b9ef549d057defff6d180ba79ec33 *man/HierarchicalGroups.Rd
 3b96e8b8068a141d63aa457b6cdd2448 *man/HierarchicalGroups2.Rd
 151c26a0c61eb6133c4dfb603a55ebc0 *man/HierarchicalGroups3.Rd
@@ -148,6 +148,7 @@ bc6763109d925ffd5338577b35b0aa38 *man/WildcardGlobbing.Rd
 e8730bdf46bdeef1ef218674c9b742b4 *man/WildcardGlobbingVector.Rd
 ccd3039cbe0c199f13ab85668e2a6255 *man/aggregate_by_pkg.Rd
 01f36ee69b893f767515ae2ffe43c0d6 *man/aggregate_multiple_fun.Rd
+5a706caadef387927fe5fddec3b47ac9 *man/any_duplicated_rows.Rd
 abab024e7c62f694fc26d560f60afbbf *man/combine_formulas.Rd
 4d0b30032449cb4870ef67663585ddd3 *man/crossMerge.Rd
 cf4e31f1a0d4ae9e0e0a949dca828842 *man/dummy_aggregate.Rd
