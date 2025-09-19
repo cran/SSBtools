@@ -1,7 +1,7 @@
-6b30a0537c2a0fa5ffe3cb43270c65a0 *DESCRIPTION
+e4992b58b4d51a38d7fc515cb2afa7bd *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-d127f9c64312c80e47bc01eac3d8e6dc *NAMESPACE
-f46bbb505fea116f487a4a7da1614a2d *NEWS.md
+e6bdae107a0221e3a13ebec2e42e5bdc *NAMESPACE
+444811dc68d48af6d67683669be95d43 *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 e53c2f714b279d51a6bf5e6559c9bccd *R/AnyEliminatedByMultiple.R
 d587659a7d5485322517ef2a27ac6ca0 *R/As_TsparseMatrix.R
@@ -13,7 +13,7 @@ b61b4967563897ccfeba1c2ffc9c0715 *R/CheckInput.r
 cf977b36f9a6407abe84f148f9cfa006 *R/DimList2Hierarchy.R
 3f30a33f38ae0f32cd0a91e90f399469 *R/Div.R
 96ab67c74fd5f76498662664c083ff5e *R/DummyApply.R
-2b5ec35be3fe3fdb59ce60a978ea4a65 *R/DummyDuplicated.R
+10ed855dba28cdf1a0e49286a9b30bc6 *R/DummyDuplicated.R
 8defaee9b4260224f41de428b38d9eb4 *R/DummyHierarchies.R
 ae591776652ea609fe46c20496dc22c2 *R/Extend0.R
 c5648edf1ab29268652bf3467fac14a7 *R/Extend0fromModelMatrixInput.R
@@ -59,6 +59,7 @@ dd698edd4cf220ae83e7baca71ba4a8c *R/WorkaroundMatrixBug6728.R
 cd76ec02a4df876192a50ceca85ac58a *R/dummy_aggregate.R
 c226e409f75031f2881b624da6553dac *R/filter_by_variable.R
 b6fcec4b67e468e2cee0dd220cd0c119 *R/formula_utils.R
+b40ee2276136af11a03e9b0ba54a8b27 *R/get_colnames.R
 0c53ac8d89cd9ffb8b037d27941ba562 *R/hierarchies_as_vars.R
 32dbfcbd039bdcb98b99d2a666a4a4c6 *R/inc_default.R
 671d95ff39393ee2ded17039cd23a60d *R/linked_GaussSuppression.R
@@ -71,6 +72,7 @@ f55f3d454ccb855a7c52cb8d90660318 *R/quantile_weighted.R
 35514d832fb781b2a0025953c7b98939 *R/table_all_integers.R
 61adb4333bd1ae1f304ee8b22e3d102d *R/tables_by_formulas.R
 e4141239f571344df67918e01c9ee196 *R/total_collapse.R
+32d38fcb6b49f09eabd003f5fc97888d *R/zero_col.R
 cb3b20077bebc5da31fc1b46c657c0ff *build/partial.rdb
 18386267cfb91bc35bd99c4cd7b59bc9 *data/sosialFiktiv.RData
 24144e25d159a9b0c2289351af5a243a *data/z1.RData
@@ -159,6 +161,7 @@ cf4e31f1a0d4ae9e0e0a949dca828842 *man/dummy_aggregate.Rd
 2dedea7fa5dae5e25f561663a3e47638 *man/formula_from_vars.Rd
 300b56b2bdfef82573ecef69a6840723 *man/formula_term_labels.Rd
 6473607f256e141a14ff59438e679dc8 *man/formula_utils.Rd
+5654cbfa8f5ff44591107ea5dfc7d96a *man/get_colnames.Rd
 150d961bf456fbec691828a3c8e35fcb *man/hierarchies_as_vars.Rd
 ea7a0a89e5f4dfae6b3ade16ed0fd52d *man/inc_default.Rd
 a30207710c5dd928dc5b4a677b256c62 *man/map_hierarchies_to_data.Rd
@@ -174,6 +177,7 @@ fef6d9c8c80ebb1d7e34aac4b4e53713 *man/tables_by_formulas.Rd
 24b2b6c249daaefdb7239681a961e858 *man/total_collapse.Rd
 ccff3d034b4a4c6e12eaf81b70221783 *man/unmatrix.Rd
 1176b7fbdec10510cac31c428cc25815 *man/vars_to_hierarchies.Rd
+28d394a30a4417671787164ae34188d6 *man/zero_col.Rd
 dcb72e30992fbe64bbe9d0c0266989c1 *tests/testthat.R
 6ad272f850fccfb930e46cc6e5ecf391 *tests/testthat/helper-aggregate_multiple_fun.R
 4aa189309c2dc9ba8200610acfabf9ee *tests/testthat/test-DummyApply.R
