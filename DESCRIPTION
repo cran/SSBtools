@@ -2,8 +2,8 @@ Package: SSBtools
 Type: Package
 Title: Algorithms and Tools for Tabular Statistics and Hierarchical
         Computations
-Version: 1.8.2
-Date: 2025-09-19
+Version: 1.8.4
+Date: 2025-10-31
 Authors@R: c(person("Øyvind", "Langsrud", role = c("aut", "cre"),
                     email = "oyl@ssb.no",
                     comment = c(ORCID = "0000-0002-1380-4396")),
@@ -23,7 +23,7 @@ RoxygenNote: 7.3.2
 Encoding: UTF-8
 Suggests: testthat, data.table
 NeedsCompilation: no
-Packaged: 2025-09-19 08:34:14 UTC; oyl
+Packaged: 2025-10-31 07:18:41 UTC; oyl
 Author: Øyvind Langsrud [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-1380-4396>),
   Daniel Lupp [aut] (ORCID: <https://orcid.org/0000-0003-3575-1691>),
@@ -33,4 +33,4 @@ Author: Øyvind Langsrud [aut, cre] (ORCID:
   Statistics Norway [cph]
 Maintainer: Øyvind Langsrud <oyl@ssb.no>
 Repository: CRAN
-Date/Publication: 2025-09-19 09:00:08 UTC
+Date/Publication: 2025-10-31 09:00:01 UTC

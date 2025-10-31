@@ -1,7 +1,7 @@
-e4992b58b4d51a38d7fc515cb2afa7bd *DESCRIPTION
+d881bf243816b3ab29eacb1dc345e6fe *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-e6bdae107a0221e3a13ebec2e42e5bdc *NAMESPACE
-444811dc68d48af6d67683669be95d43 *NEWS.md
+ecbbc05728251d6f12b5eb0f486262d8 *NAMESPACE
+b64787107f7a42b88217eb7e832c30e9 *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 e53c2f714b279d51a6bf5e6559c9bccd *R/AnyEliminatedByMultiple.R
 d587659a7d5485322517ef2a27ac6ca0 *R/As_TsparseMatrix.R
@@ -48,7 +48,7 @@ b5dd5fb4c5d33d06ca808f8d741fcda7 *R/RbindAllCbindIdMatch.r
 d55c4fd94dd1fa67cfc664de643b6ad7 *R/Reduce0exact.R
 103eea35dab5a3b692763005fe14bc6a *R/RoundWhole.R
 3f596b535d3d57d640eef12265906ea8 *R/RowGroups.R
-a7dd787c3773141c58f4277dc486c199 *R/SSBtoolsData.R
+a8e85f5dd9aff3f356e03cbe986a26ac *R/SSBtoolsData.R
 5e61937a8d319e62197f4c5861d66769 *R/SortRows.R
 4a2dfb15c4e3532eb3cd0fe7908bacbf *R/Stack.R
 9cb647c86652c06bbc9f7eaaa905ee04 *R/UniqueSeq.R
@@ -56,6 +56,7 @@ dd698edd4cf220ae83e7baca71ba4a8c *R/WorkaroundMatrixBug6728.R
 33a68cc7239fbc0b776c57207acb9bbd *R/aggregate_by_pkg.R
 2ecf694d3686299c91f3b35478fccc65 *R/aggregate_multiple_fun.R
 5fe4db95f89542e157fcd5a4c6596271 *R/anySumNOTprimary.R
+e3368efb8e7dd58d78a7ada79087855f *R/diff_groups.R
 cd76ec02a4df876192a50ceca85ac58a *R/dummy_aggregate.R
 c226e409f75031f2881b624da6553dac *R/filter_by_variable.R
 b6fcec4b67e468e2cee0dd220cd0c119 *R/formula_utils.R
@@ -141,7 +142,7 @@ cf3ba5234575961f514fa3ade2032726 *man/RbindAll.Rd
 b982b650a56e97e8d89900eaaeb55db5 *man/Reduce0exact.Rd
 029f63a6007a99bc045e4b023dcf4076 *man/RoundWhole.Rd
 6be393265e2cd2a447ebd1610d829411 *man/RowGroups.Rd
-142082e01892370fb274dd55e75c465f *man/SSBtoolsData.Rd
+330641a59851deb3f726434ae48228d7 *man/SSBtoolsData.Rd
 64267d7912ded9c1191061591929e1e0 *man/SortRows.Rd
 d896673d508126755fb71f78fc480bb9 *man/Stack.Rd
 0f572380791ff32e53eaf4c0f1197d4d *man/UniqueSeq.Rd
@@ -153,6 +154,8 @@ ccd3039cbe0c199f13ab85668e2a6255 *man/aggregate_by_pkg.Rd
 5a706caadef387927fe5fddec3b47ac9 *man/any_duplicated_rows.Rd
 abab024e7c62f694fc26d560f60afbbf *man/combine_formulas.Rd
 4d0b30032449cb4870ef67663585ddd3 *man/crossMerge.Rd
+ae7f9fde81fcf077dc6038469665d6a7 *man/data_diff_groups.Rd
+68ffa52101c4fb8f395e86e1b4672dac *man/diff_groups.Rd
 cf4e31f1a0d4ae9e0e0a949dca828842 *man/dummy_aggregate.Rd
 99836642b513096838044352cadaf6df *man/figures/logo.png
 895c219b2decac4405f05f55f0f66737 *man/filter_by_variable.Rd
