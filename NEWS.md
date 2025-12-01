@@ -1,3 +1,21 @@
+## SSBtools 1.8.6
+* Added support for named total vectors in `ModelMatrix()` and related functions.
+  - `FormulaSums()`/`Formula2ModelMatrix()` can now accept multiple total codes
+    via named total vectors.
+  - See also the underlying functions `FindDimLists()` and `AutoHierarchies()`,
+    which now also support named total vectors.
+  - `tables_by_formulas()` has been updated so that named total vectors are handled
+    flexibly in connection with both `substitute_vars` and `collapse_vars`.
+* New function `convert_integer64()`.
+  - Helper for converting `integer64` data (from 
+  [bit64](https://cran.r-project.org/package=bit64) 
+  or 
+  [arrow](https://cran.r-project.org/package=arrow) 
+  imports) 
+    to base R `integer`, `numeric`, or `character`.
+* `max_contribution()` now accepts integer vectors for `y`. 
+  - Previously, integer input caused an error due to dgTMatrix in the Matrix package requiring a numeric (double) `x` slot.
+
 
 ## SSBtools 1.8.4
 * New functions `diff_groups()` and `data_diff_groups()`:
