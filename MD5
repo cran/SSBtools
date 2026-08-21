@@ -1,7 +1,7 @@
-86f89c10dd54f7ff80126219733e22e3 *DESCRIPTION
+889c4fbb2f2cc5437e7bb2df5b540b34 *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-95f092fe8c1c7a596117f5e1d4e555a0 *NAMESPACE
-b28b0054f253cc77ddd7d1a32eedc61b *NEWS.md
+7ac29e58ef1d748ed054ad9c8174a23c *NAMESPACE
+b3ff0c940bcbfb1bed9c4795806e4d16 *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 e53c2f714b279d51a6bf5e6559c9bccd *R/AnyEliminatedByMultiple.R
 d587659a7d5485322517ef2a27ac6ca0 *R/As_TsparseMatrix.R
@@ -56,9 +56,9 @@ dd698edd4cf220ae83e7baca71ba4a8c *R/WorkaroundMatrixBug6728.R
 33a68cc7239fbc0b776c57207acb9bbd *R/aggregate_by_pkg.R
 2ecf694d3686299c91f3b35478fccc65 *R/aggregate_multiple_fun.R
 5fe4db95f89542e157fcd5a4c6596271 *R/anySumNOTprimary.R
-0ec2d9a662108a9c174c4bdab54efcc7 *R/convert_integer64.R
+0f04b56874a7dbb4491a11ed073dfeac *R/convert_integer64.R
 8e012cd4c0f551e6425414375393fd54 *R/diff_groups.R
-cd76ec02a4df876192a50ceca85ac58a *R/dummy_aggregate.R
+89d1c4c7a4dd7fe5fd2527ab5254c4d4 *R/dummy_aggregate.R
 c226e409f75031f2881b624da6553dac *R/filter_by_variable.R
 b6fcec4b67e468e2cee0dd220cd0c119 *R/formula_utils.R
 b40ee2276136af11a03e9b0ba54a8b27 *R/get_colnames.R
@@ -68,7 +68,7 @@ b40ee2276136af11a03e9b0ba54a8b27 *R/get_colnames.R
 1d0f4feff938d5a965afce90bb6e6996 *R/map_hierarchies_to_data.R
 029f04f581a0be1c07bb74cbb225e29c *R/matlabColon.R
 a1ca9115d518e81522904e7500624f03 *R/max_contribution.R
-59b38fb7289a4393ad06bedccb4ed834 *R/model_aggregate.R
+da89c1fc22955679fc6189be4627367e *R/model_aggregate.R
 3e0bd8f9f6b729bd0ed44440283954e4 *R/output_term_labels.R
 f55f3d454ccb855a7c52cb8d90660318 *R/quantile_weighted.R
 c11864e9a68753f65c4ae5477d3fe6f6 *R/table_all_integers.R
@@ -154,11 +154,11 @@ ccd3039cbe0c199f13ab85668e2a6255 *man/aggregate_by_pkg.Rd
 01f36ee69b893f767515ae2ffe43c0d6 *man/aggregate_multiple_fun.Rd
 5a706caadef387927fe5fddec3b47ac9 *man/any_duplicated_rows.Rd
 abab024e7c62f694fc26d560f60afbbf *man/combine_formulas.Rd
-dab137cc8039f344ddfef2fac39cbbcd *man/convert_integer64.Rd
+8e482f55af4db234f6a8345aa2af0013 *man/convert_integer64.Rd
 4d0b30032449cb4870ef67663585ddd3 *man/crossMerge.Rd
 ae7f9fde81fcf077dc6038469665d6a7 *man/data_diff_groups.Rd
 d14066bc3df8d5370e646d8b9b2f0fec *man/diff_groups.Rd
-cf4e31f1a0d4ae9e0e0a949dca828842 *man/dummy_aggregate.Rd
+e52934acfb2f39fc303fac1860cb6d78 *man/dummy_aggregate.Rd
 99836642b513096838044352cadaf6df *man/figures/logo.png
 895c219b2decac4405f05f55f0f66737 *man/filter_by_variable.Rd
 6f5c863588391a6c5bc52f47cf476c2a *man/fix_fun_amf.Rd
