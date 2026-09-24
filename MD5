@@ -1,7 +1,7 @@
-889c4fbb2f2cc5437e7bb2df5b540b34 *DESCRIPTION
+9859fc7d6c84b428f928265e3858f46a *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-7ac29e58ef1d748ed054ad9c8174a23c *NAMESPACE
-b3ff0c940bcbfb1bed9c4795806e4d16 *NEWS.md
+8a2bcb36216a4147a468d3f1a9db9185 *NAMESPACE
+c64a9324f8dd96427229d17a8bf9e30c *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 e53c2f714b279d51a6bf5e6559c9bccd *R/AnyEliminatedByMultiple.R
 d587659a7d5485322517ef2a27ac6ca0 *R/As_TsparseMatrix.R
@@ -15,9 +15,9 @@ cf977b36f9a6407abe84f148f9cfa006 *R/DimList2Hierarchy.R
 96ab67c74fd5f76498662664c083ff5e *R/DummyApply.R
 10ed855dba28cdf1a0e49286a9b30bc6 *R/DummyDuplicated.R
 8defaee9b4260224f41de428b38d9eb4 *R/DummyHierarchies.R
-ae591776652ea609fe46c20496dc22c2 *R/Extend0.R
+a9afaa4a3a5bb1c2f74373cc38af0b04 *R/Extend0.R
 c5648edf1ab29268652bf3467fac14a7 *R/Extend0fromModelMatrixInput.R
-2b64a15218070a31d89f1de16997387e *R/Extend0rnd1.R
+f9355739900d07ca61590b58f7d66b08 *R/Extend0rnd1.R
 96764bc4d7dd93aff338c7bf513d1071 *R/FactorLevCorr.R
 4f2580a972803a214f63ea90448f1d42 *R/FindCommonCells.R
 879d66f406c137592824b7808b98e083 *R/FindDimLists.R
@@ -101,8 +101,9 @@ fa421f18310e5db13595a3f903d62a84 *man/DimList2Hierarchy.Rd
 5ddabab19183cef7274722159ffe5c18 *man/DummyDuplicated.Rd
 2542d4bd67ff7e204b83bae03cdeeeaf *man/DummyHierarchy.Rd
 db269a52887e81bc796b35326589557d *man/Extend0.Rd
+a7a1a31fb802ff75b4b46591642396a0 *man/Extend0_n_rnd_groups.Rd
 2af505ec2a8b3d9fd55da28b8cf5a7e9 *man/Extend0fromModelMatrixInput.Rd
-807eb73f97572ebd0b45fa5acc26169e *man/Extend0rnd1.Rd
+433bddd6192e435759669fca042fc9f4 *man/Extend0rnd1.Rd
 88b847dff1ad49f8f4b98bfbb0fe70c5 *man/FactorLevCorr.Rd
 73c6abf9515074e2dcd1d55b073fb493 *man/FindCommonCells.Rd
 af65d2505b183836317ba1141dc968cc *man/FindDimLists.Rd
