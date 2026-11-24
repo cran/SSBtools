@@ -1,7 +1,7 @@
-9859fc7d6c84b428f928265e3858f46a *DESCRIPTION
+431a7bc8b5de1d2c90de947b7b3eb86c *DESCRIPTION
 5bfcb40c5f68c9538b5a7763ee25fd36 *LICENSE
-8a2bcb36216a4147a468d3f1a9db9185 *NAMESPACE
-c64a9324f8dd96427229d17a8bf9e30c *NEWS.md
+dc9f002583e1f2e4332c4cf0cd01dbca *NAMESPACE
+a07e177ac389ffdf449515a9cea89864 *NEWS.md
 e7acb7f0adc57bbc1b7943aa19cc8681 *R/AddLeadingZeros.R
 e53c2f714b279d51a6bf5e6559c9bccd *R/AnyEliminatedByMultiple.R
 d587659a7d5485322517ef2a27ac6ca0 *R/As_TsparseMatrix.R
@@ -24,11 +24,11 @@ f9355739900d07ca61590b58f7d66b08 *R/Extend0rnd1.R
 e67c2b534649096ecf070c249323b25a *R/FindDisclosiveCells.R
 1ae23ebe8c984857cb990ab65efee329 *R/FindHierarchies.R
 62ce0556c4047f2accbac8273c8c0af2 *R/FindTableGroup.R
-bc5d0943f5891f57cf8c512ccac66f6b *R/FormulaSelection.R
+a9a06994505008291a9ded58843cadb6 *R/FormulaSelection.R
 c37f7b40b735a4b8b15a698e71d6ab3e *R/FormulaSums.R
 0ed0ff5a5d847aa8360f1baca86f445a *R/GaussIndependent.R
 34ce598689139eddeafb371340715111 *R/GaussIterationFunction.R
-56bbe82aa3f631a25e4bf3a05cbb362e *R/GaussSuppression.R
+9625ee31410054dd5a49ab344b29af93 *R/GaussSuppression.R
 a8afa4c0ed4d18f0dd7d95e5b988e327 *R/HierarchicalGroups.R
 ee10360bd903168151c870fc7e254cb8 *R/Hierarchies2ModelMatrix.R
 078b38749082886faab642b4bd7a4b34 *R/HierarchiesAndFormula2ModelMatrix.R
@@ -60,7 +60,7 @@ dd698edd4cf220ae83e7baca71ba4a8c *R/WorkaroundMatrixBug6728.R
 8e012cd4c0f551e6425414375393fd54 *R/diff_groups.R
 89d1c4c7a4dd7fe5fd2527ab5254c4d4 *R/dummy_aggregate.R
 c226e409f75031f2881b624da6553dac *R/filter_by_variable.R
-b6fcec4b67e468e2cee0dd220cd0c119 *R/formula_utils.R
+86241944d81a9b7b9424c066758b78c2 *R/formula_utils.R
 b40ee2276136af11a03e9b0ba54a8b27 *R/get_colnames.R
 0c53ac8d89cd9ffb8b037d27941ba562 *R/hierarchies_as_vars.R
 32dbfcbd039bdcb98b99d2a666a4a4c6 *R/inc_default.R
@@ -72,7 +72,7 @@ da89c1fc22955679fc6189be4627367e *R/model_aggregate.R
 3e0bd8f9f6b729bd0ed44440283954e4 *R/output_term_labels.R
 f55f3d454ccb855a7c52cb8d90660318 *R/quantile_weighted.R
 c11864e9a68753f65c4ae5477d3fe6f6 *R/table_all_integers.R
-fb08079e190763b9d181b2535c8af8ce *R/tables_by_formulas.R
+9f4f3d2a8374d36135bc28e8b46317a3 *R/tables_by_formulas.R
 e4141239f571344df67918e01c9ee196 *R/total_collapse.R
 32d38fcb6b49f09eabd003f5fc97888d *R/zero_col.R
 9d5d57306c989a862d29353812d857e7 *build/partial.rdb
@@ -112,11 +112,11 @@ af65d2505b183836317ba1141dc968cc *man/FindDimLists.Rd
 94f885ed5169fbf0f45f60add2256a4f *man/FindTableGroup.Rd
 8a370e3338bd358ca4d7cd9f55b391c2 *man/ForceCharacterDataFrame.Rd
 caa87114b7f08f1f16219cbd10b0e79e *man/ForceFactorDataFrame.Rd
-7ed211b284996da46ec711a27d879a1f *man/FormulaSelection.Rd
+9f8a20d677e4349afb0bfeb9700f318a *man/FormulaSelection.Rd
 0ddae070febabe0d0a67c22d5235a98f *man/FormulaSums.Rd
 f5d49950972512cf96ee7643fcb1d458 *man/GaussIndependent.Rd
 2dd7854338167ec04d56fe89face2251 *man/GaussIterationFunction.Rd
-65f71b8df595f4840fe3d7e9692d8710 *man/GaussSuppression.Rd
+4435464c50fdc02ee76833a70d48cf8d *man/GaussSuppression.Rd
 761b9ef549d057defff6d180ba79ec33 *man/HierarchicalGroups.Rd
 3b96e8b8068a141d63aa457b6cdd2448 *man/HierarchicalGroups2.Rd
 151c26a0c61eb6133c4dfb603a55ebc0 *man/HierarchicalGroups3.Rd
@@ -165,8 +165,9 @@ e52934acfb2f39fc303fac1860cb6d78 *man/dummy_aggregate.Rd
 6f5c863588391a6c5bc52f47cf476c2a *man/fix_fun_amf.Rd
 40c0e9170cfe4672dcc3dafac0f4e5bb *man/fix_vars_amf.Rd
 2dedea7fa5dae5e25f561663a3e47638 *man/formula_from_vars.Rd
+0b79fb5badb81124e0617d41b602ca8a *man/formula_setdiff.Rd
 300b56b2bdfef82573ecef69a6840723 *man/formula_term_labels.Rd
-6473607f256e141a14ff59438e679dc8 *man/formula_utils.Rd
+cb5398bca0d26d1740b2db67f0f33d4c *man/formula_utils.Rd
 5654cbfa8f5ff44591107ea5dfc7d96a *man/get_colnames.Rd
 150d961bf456fbec691828a3c8e35fcb *man/hierarchies_as_vars.Rd
 ea7a0a89e5f4dfae6b3ade16ed0fd52d *man/inc_default.Rd
@@ -179,7 +180,7 @@ eea6e3abb88a2c851b2b44af2c5eaf93 *man/output_term_labels.Rd
 960e8a546e4736b1ad99739d77b23da9 *man/sosialFiktiv.Rd
 9f9a38859217e3d2c87c451fd3d41d7b *man/substitute_formula_vars.Rd
 e247a56154e9ffe7fbaa367dace99b20 *man/table_all_integers.Rd
-4e5a8eadcb5d3f4dfb667791e005c9bf *man/tables_by_formulas.Rd
+628c29942dd1f135e6a446f55d89c16e *man/tables_by_formulas.Rd
 24b2b6c249daaefdb7239681a961e858 *man/total_collapse.Rd
 ccff3d034b4a4c6e12eaf81b70221783 *man/unmatrix.Rd
 1176b7fbdec10510cac31c428cc25815 *man/vars_to_hierarchies.Rd
